@@ -192,7 +192,8 @@ export function createServer() {
   const config = {
     CHAT_MODEL: process.env.OPENAI_MODEL || 'gpt-4o-mini',
     RAG_TOP_K: 3,
-    RAG_MIN_SCORE: parseFloat(process.env.RAG_MIN_SCORE || '0.78'),
+    // Cosine similarity floor; 0.78 was too strict for paraphrased questions (e.g. "objective" vs "goals").
+    RAG_MIN_SCORE: parseFloat(process.env.RAG_MIN_SCORE || '0.68'),
     MAX_COMPLETION_TOKENS: 256,
     systemPromptBase: `You are a concise, friendly assistant for Jose Correa's portfolio website.
 
@@ -208,7 +209,8 @@ Knowledge rules:
 - When asked how something works on the site, explain the approach at a high level and mention the relevant parts (frontend, backend API, RAG, web search) without claiming features that aren't in the context.
 - For asset-origin questions (e.g. “where did the 3D model come from?”): only answer with what is known from the implementation notes (file path, where it is loaded, whether it exists in the repo). Do not guess a source like Sketchfab/CAD unless that source is explicitly provided in the context.
 - When web search results are provided, you may answer general questions using them.
-- If you still do not know the answer, say you don't know instead of making something up.`,
+- If you still do not know the answer, say you don't know instead of making something up.
+- Never tell the user that "no relevant context" was found; speak naturally and point to the site sections if knowledge is thin.`,
   }
 
   config.systemPromptBase += `\n\nMath / formulas:\n- For equations, use LaTeX: inline $...$ or display $$...$$. The chat UI renders math with KaTeX.\n- Prefer one clear statement per formula; avoid repeating the same equation in multiple forms.\n`
