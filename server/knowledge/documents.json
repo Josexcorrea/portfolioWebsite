@@ -1,0 +1,30 @@
+[
+  {
+    "title": "About Jose Correa",
+    "content": "About me: Software engineer focused on full-stack and ML. I build web apps, APIs, and data pipelines—and enjoy turning ideas into shipped products."
+  },
+  {
+    "title": "Sports Betting EV Screener & ML Pricing Engine",
+    "content": "Project: Sports Betting EV Screener & ML Pricing Engine. Tagline: Personal Project. Expected Value driven ML pipeline for sportsbook mispricing using time-series cross-validation, feature engineering, and recency-weighted training on NBA historical data. Evaluated on 1,000+ historical NBA games (80/20 chronological split), achieving 64.0% predictive accuracy. Deploying model within a React/TypeScript + Python production pipeline for real-time EV detection, Kelly criterion stake sizing, arbitrage flagging, and automated performance analytics.. Technologies: react, typescript, python, pytorch, numpy, scikitlearn."
+  },
+  {
+    "title": "Power Distribution Module (Senior Design)",
+    "content": "Project: Power Distribution Module (Senior Design). Tagline: FIU Formula SAE. Architected and shipped an end-to-end real-time monitoring platform for an 8-channel Formula SAE PDM using Python (Flask), React/TypeScript, and Electron. Built a checksum-validated 58-byte serial telemetry pipeline (10 Hz) for voltage, current, and temperature streaming. Implemented scenario-based testing and channel-level control APIs to validate failure modes and improve system reliability.. Technologies: python, flask, react, typescript, electron."
+  },
+  {
+    "title": "Netflix Clone Application",
+    "content": "Project: Netflix Clone Application. Tagline: Personal Project. Built a Netflix-style web application with responsive UI and API-driven content rendering using React and modern frontend tooling.. Technologies: react, typescript, html5, css3."
+  },
+  {
+    "title": "Full Stack Engineer (Contract) — JyJ Med Spa — Miami, FL",
+    "content": "Role: Full Stack Engineer (Contract). JyJ Med Spa — Miami, FL. Period: Mar. – May 2022. Built and deployed production marketing website using React/TypeScript and GoDaddy, improving acquisition and visibility. Architected cross-platform Electron inventory management app with Python Flask server, real-time tracking across 20+ SKUs and multi-user workflows. Implemented Firebase Authentication-based access control for inventory modifications, improving security and data integrity. Packaged and distributed Electron desktop app for end users, streamlining internal adoption and deployment. Skills: react, typescript, electron, python, flask, firebase, html5, css3."
+  },
+  {
+    "title": "Software Engineer, AI Evaluation (Contract) — Mercor — Remote",
+    "content": "Role: Software Engineer, AI Evaluation (Contract). Mercor — Remote. Period: Jan. – Apr. 2023. Evaluated and debugged 200+ AI-generated code solutions (algorithms, data structures, OS, databases), improving model correctness and reliability. Identified recurring logical and edge-case failure patterns in LLM-generated code, producing structured feedback for model evaluation and refinement. Developed and validated reference implementations to benchmark generated solutions against correctness, efficiency, and robustness. Skills: python, pytorch, numpy, scikitlearn, cplusplus, linux."
+  },
+  {
+    "title": "Bachelor of Science in Computer Engineering — Florida International University — Miami, FL",
+    "content": "Education: Bachelor of Science in Computer Engineering. Florida International University — Miami, FL. Period: Graduated Dec 2025. Coursework: Machine Learning, Data Structures & Algorithms, Systems Programming, Embedded Operating Systems, Computer Architecture, Analytics & Cloud Computing, Statistics & Probability, Linear Algebra. Skills: python, pytorch, numpy, c, linux, amazonaws."
+  }
+]

@@ -1,0 +1,6 @@
+export { HomeView } from './HomeView'
+export { SkillsView } from './SkillsView'
+export { ExperienceView } from './ExperienceView'
+export { ProjectsView } from './ProjectsView'
+export { ExperienceAndProjectsView } from './ExperienceAndProjectsView'
+export { ContactView } from './ContactView'
