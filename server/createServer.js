@@ -54,17 +54,21 @@ export function createServer() {
     }),
   )
 
-  app.use(
-    helmet.permissionsPolicy({
-      features: {
-        camera: [],
-        microphone: [],
-        geolocation: [],
-        payment: [],
-        usb: [],
-      },
-    }),
-  )
+  // Helmet does not ship a permissionsPolicy middleware; set the header directly.
+  // This disables a few powerful features site-wide.
+  app.use((req, res, next) => {
+    res.setHeader(
+      'Permissions-Policy',
+      [
+        'camera=()',
+        'microphone=()',
+        'geolocation=()',
+        'payment=()',
+        'usb=()',
+      ].join(', '),
+    )
+    next()
+  })
 
   app.use(helmet.frameguard({ action: 'deny' }))
 
@@ -115,7 +119,8 @@ export function createServer() {
     legacyHeaders: false,
   })
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+  // Allow the server to boot even without an OpenAI key (chat route will return an error).
+  const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null
 
   const config = {
     CHAT_MODEL: process.env.OPENAI_MODEL || 'gpt-4o-mini',

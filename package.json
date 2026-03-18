@@ -20,10 +20,11 @@
     "audit:prod": "npm audit --omit=dev",
     "security:check": "npm run check && npm run audit:prod",
     "server": "node server/index.js",
+    "start:server": "node server/index.js",
     "sync-knowledge": "node server/scripts/sync-knowledge-from-source.js",
     "build-knowledge": "node server/scripts/build-knowledge.js",
     "dev:full": "concurrently -n server,web -c blue,green \"npm run server\" \"npm run dev\"",
-    "start": "node server/index.js"
+    "start": "npm run dev:full"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
