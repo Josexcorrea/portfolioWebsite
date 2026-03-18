@@ -50,29 +50,29 @@ export function HomeView({ avatarError, onAvatarError }: HomeViewProps) {
         />
       </div>
       <div className="relative z-[1] flex-1 flex w-full min-h-screen min-h-dvh px-[clamp(0.75rem,3vw,2.5rem)] pb-[env(safe-area-inset-bottom,0px)]">
-        {/* Top HUD: title left, date/time right */}
-        <div className="pointer-events-none absolute inset-x-0 top-3 flex items-center justify-between px-[clamp(0.75rem,3vw,2.5rem)]">
-          {/* Top-left: role title */}
-          <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/65 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-text-muted shadow-[0_10px_32px_rgba(0,0,0,0.7)] backdrop-blur-md">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]" />
-            <span className="text-text-pri">Full‑Stack &amp; Machine Learning Engineer</span>
+        {/* Top HUD: stacked below lg so pills never collide; row on large screens */}
+        <div className="pointer-events-none absolute inset-x-0 top-[max(0.75rem,env(safe-area-inset-top))] z-10 flex flex-col items-center gap-2 px-[clamp(0.75rem,3vw,2.5rem)] lg:flex-row lg:items-center lg:justify-between">
+          {/* Role title */}
+          <div className="pointer-events-auto flex max-w-[min(100%,22rem)] flex-wrap items-center justify-center gap-2 rounded-full border border-white/15 bg-black/65 px-3 py-1.5 text-center text-[0.62rem] font-semibold uppercase leading-snug tracking-[0.18em] text-text-muted shadow-[0_10px_32px_rgba(0,0,0,0.7)] backdrop-blur-md sm:max-w-none sm:text-[0.68rem] sm:tracking-[0.22em] lg:justify-start lg:text-left">
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]" />
+            <span className="text-balance text-text-pri">Full‑Stack &amp; Machine Learning Engineer</span>
           </div>
-          {/* Top-right: date / time */}
-          <div className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-white/15 bg-black/65 px-3 py-1 text-[0.68rem] font-medium text-text-sec shadow-[0_10px_32px_rgba(0,0,0,0.7)] backdrop-blur-md">
-            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]" />
-            <span className="tracking-[0.16em] uppercase text-[0.65rem] text-text-muted">Local</span>
+          {/* Date / time */}
+          <div className="pointer-events-auto inline-flex max-w-full flex-wrap items-center justify-center gap-x-2 gap-y-0.5 rounded-full border border-white/15 bg-black/65 px-3 py-1.5 text-[0.65rem] font-medium text-text-sec shadow-[0_10px_32px_rgba(0,0,0,0.7)] backdrop-blur-md sm:text-[0.68rem] lg:justify-end">
+            <span className="inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]" />
+            <span className="tracking-[0.16em] uppercase text-[0.6rem] text-text-muted sm:text-[0.65rem]">Local</span>
             <span className="text-text-pri">{timeStr}</span>
             <span className="text-text-sec/80">•</span>
-            <span>{dateStr}</span>
+            <span className="text-center">{dateStr}</span>
           </div>
         </div>
         {/*
           < lg: stack — text + pfp on top, 3D full-width below.
           lg+: row — left column fixed width, right column fills entire rest of viewport.
         */}
-        <div className="flex w-full flex-1 flex-col gap-10 pt-10 pb-8 lg:flex-row lg:items-stretch lg:gap-0 lg:py-0 lg:pt-[var(--section-padding-y)] lg:pb-[var(--section-padding-y)]">
+        <div className="flex w-full flex-1 flex-col gap-10 pb-8 max-lg:pt-[max(8.5rem,calc(env(safe-area-inset-top,0px)+7.25rem))] lg:flex-row lg:items-stretch lg:gap-0 lg:py-0 lg:pt-[max(var(--section-padding-y),5.25rem)] lg:pb-[var(--section-padding-y)]">
           <section
-            className="order-1 flex w-full shrink-0 flex-col lg:order-1 lg:w-auto lg:max-w-[min(50vw,40rem)] lg:flex-none lg:justify-center lg:pr-16 xl:pr-20"
+            className="order-1 flex w-full shrink-0 flex-col items-center text-center lg:order-1 lg:items-start lg:text-left lg:w-auto lg:max-w-[min(50vw,40rem)] lg:flex-none lg:justify-center lg:pr-16 xl:pr-20"
             aria-label="Intro and profile"
           >
             <div className="flex flex-col gap-6">
@@ -108,7 +108,7 @@ export function HomeView({ avatarError, onAvatarError }: HomeViewProps) {
                     <span className="text-text-pri">Node</span> • <span className="text-text-pri">ML / LLMs</span>
                   </p>
                 </div>
-                <div className="mt-2 flex w-full justify-start">
+                <div className="mt-2 flex w-full justify-center lg:justify-start">
                   <div
                     className="relative grid aspect-[3/4] w-[min(170px,34vw)] place-items-center overflow-hidden rounded-3xl border border-white/10 bg-white/5 shadow-[0_24px_80px_rgba(0,0,0,0.65)] backdrop-blur-lg"
                     role="img"

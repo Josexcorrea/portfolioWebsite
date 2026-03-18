@@ -1,4 +1,4 @@
-import { experiences } from '@/data'
+import { experiences, projects } from '@/data'
 import {
   ClickSpark,
   ContactView,
@@ -43,7 +43,8 @@ export function SectionRenderer({
   onGameOver,
 }: SectionRendererProps) {
   // Validate the initial selection defensively; keeps UI stable if content changes.
-  const safeSelectedWorkId = selectedWorkId || experiences[0]?.id || ''
+  const defaultWorkId = projects[0]?.id ?? experiences[0]?.id ?? ''
+  const safeSelectedWorkId = selectedWorkId || defaultWorkId
 
   return (
     <>

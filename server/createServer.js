@@ -3,7 +3,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 import OpenAI from 'openai'
-import { existsSync } from 'fs'
+import { existsSync, readFileSync } from 'fs'
 import path from 'path'
 import { createCachedFileVectorStore } from './lib/vectorStore.js'
 import { createChatRouter } from './routes/chat.js'
@@ -14,6 +14,71 @@ function parseCorsAllowlist(raw) {
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
+}
+
+function buildTechStackSummary() {
+  try {
+    const pkgPath = path.join(process.cwd(), 'package.json')
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
+    const deps = pkg?.dependencies || {}
+    const devDeps = pkg?.devDependencies || {}
+
+    const has = (name) => Boolean(deps?.[name] || devDeps?.[name])
+    const v = (name) => deps?.[name] || devDeps?.[name] || ''
+
+    const lines = []
+    if (has('react')) lines.push(`- Frontend: React ${v('react')}`.trim())
+    if (has('vite')) lines.push(`- Build/dev: Vite ${v('vite')}`.trim())
+    if (has('typescript')) lines.push(`- Language: TypeScript ${v('typescript')}`.trim())
+    if (has('tailwindcss')) lines.push(`- Styling: Tailwind CSS ${v('tailwindcss')}`.trim())
+    if (has('three') || has('@react-three/fiber') || has('@react-three/drei')) {
+      lines.push(
+        `- 3D: three.js ${v('three')}, @react-three/fiber ${v('@react-three/fiber')}, @react-three/drei ${v('@react-three/drei')}`.trim(),
+      )
+    }
+    if (has('gsap')) lines.push(`- Animation: GSAP ${v('gsap')}`.trim())
+    if (has('express')) lines.push(`- Backend: Node.js + Express ${v('express')}`.trim())
+    if (has('openai')) lines.push(`- AI chat: OpenAI SDK ${v('openai')} (RAG + web search)`.trim())
+    if (has('dotenv')) lines.push(`- Config: dotenv ${v('dotenv')}`.trim())
+    if (has('helmet') || has('cors') || has('express-rate-limit')) {
+      lines.push(
+        `- Security: helmet ${v('helmet')}, cors ${v('cors')}, express-rate-limit ${v('express-rate-limit')}`.trim(),
+      )
+    }
+    if (has('react-markdown') || has('remark-gfm') || has('rehype-sanitize')) {
+      lines.push(
+        `- Markdown: react-markdown ${v('react-markdown')}, remark-gfm ${v('remark-gfm')}, rehype-sanitize ${v('rehype-sanitize')}`.trim(),
+      )
+    }
+
+    return lines.length ? lines.join('\n') : 'Tech stack: (unavailable).'
+  } catch {
+    return 'Tech stack: (unavailable).'
+  }
+}
+
+function buildSiteImplementationNotes() {
+  const lines = []
+
+  // 3D model notes (keep factual; do not guess external sources).
+  const computerModelPublicPath = '/computerModel.glb'
+  const computerModelFsPath = path.join(process.cwd(), 'public', 'computerModel.glb')
+  const computerModelPresent = existsSync(computerModelFsPath)
+  lines.push(
+    `- 3D hero model: ${computerModelPublicPath} (loaded in src/features/hero/ComputerModel.tsx via @react-three/drei useGLTF). File present in public/: ${
+      computerModelPresent ? 'yes' : 'no'
+    }.`,
+  )
+  lines.push(
+    '- 3D model origin/attribution: generated/downloaded from Meshy AI (meshy.ai).',
+  )
+
+  // Chat notes
+  lines.push('- Chat API endpoint: POST /api/chat (server/routes/chat.js).')
+  lines.push('- RAG context: server/knowledge/* and vector store in server/lib/vectorStore.js.')
+  lines.push('- Web search: Tavily (env: TAVILY_API_KEY) in server/services/webSearch.js.')
+
+  return lines.join('\n')
 }
 
 export function createServer() {
@@ -121,6 +186,8 @@ export function createServer() {
 
   // Allow the server to boot even without an OpenAI key (chat route will return an error).
   const openai = process.env.OPENAI_API_KEY ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY }) : null
+  const techStackSummary = buildTechStackSummary()
+  const implementationNotes = buildSiteImplementationNotes()
 
   const config = {
     CHAT_MODEL: process.env.OPENAI_MODEL || 'gpt-4o-mini',
@@ -137,9 +204,17 @@ Style rules:
 
 Knowledge rules:
 - Use the portfolio context to answer questions about Jose's projects, experience, and background.
+- Use the tech stack section below to answer "what stack is this site built with?" and "how did you build X on the site?" questions.
+- When asked how something works on the site, explain the approach at a high level and mention the relevant parts (frontend, backend API, RAG, web search) without claiming features that aren't in the context.
+- For asset-origin questions (e.g. “where did the 3D model come from?”): only answer with what is known from the implementation notes (file path, where it is loaded, whether it exists in the repo). Do not guess a source like Sketchfab/CAD unless that source is explicitly provided in the context.
 - When web search results are provided, you may answer general questions using them.
 - If you still do not know the answer, say you don't know instead of making something up.`,
   }
+
+  config.systemPromptBase += `\n\nMath / formulas:\n- For equations, use LaTeX: inline $...$ or display $$...$$. The chat UI renders math with KaTeX.\n- Prefer one clear statement per formula; avoid repeating the same equation in multiple forms.\n`
+
+  config.systemPromptBase += `\n\n## Site tech stack (from package.json)\n${techStackSummary}\n`
+  config.systemPromptBase += `\n## Site implementation notes (from repo)\n${implementationNotes}\n`
 
   const store = createCachedFileVectorStore()
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { experiences } from '@/data'
+import { experiences, projects } from '@/data'
 import { ScrollNav } from '@/components'
 import { FloatingChatWidget } from '@/features/chat'
 import { SCROLL_SECTIONS } from './sections'
@@ -9,7 +9,10 @@ import { useActiveSection } from './hooks/useActiveSection'
 
 export default function App() {
   const [avatarError, setAvatarError] = useState(false)
-  const [selectedWorkId, setSelectedWorkId] = useState<string>(experiences[0].id)
+  /** Matches Experience & Projects sidebar order: Projects group first, then Experience. */
+  const [selectedWorkId, setSelectedWorkId] = useState<string>(
+    () => projects[0]?.id ?? experiences[0]?.id ?? '',
+  )
   const [skillsSparksActive, setSkillsSparksActive] = useState(false)
   const { activeIndex: activeSectionIndex, setSectionRef, scrollToSection } = useActiveSection(
     SCROLL_SECTIONS.length

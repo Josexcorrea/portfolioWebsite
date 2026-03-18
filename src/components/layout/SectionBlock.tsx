@@ -23,6 +23,7 @@ export function SectionBlock({ view, children }: SectionBlockProps) {
   const title = getSectionLabel(view)
   const isFullBleed = view === 'skillTree' || view === 'contact'
   const isWork = view === 'work'
+  const isContact = view === 'contact'
   const blockRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLHeadingElement>(null)
   const blockInViewRef = useRef(false)
@@ -56,24 +57,37 @@ export function SectionBlock({ view, children }: SectionBlockProps) {
   return (
     <div
       ref={blockRef}
-      className="relative flex-1 flex flex-col min-h-0 min-h-screen min-h-dvh h-screen h-dvh pb-0"
+      className={`relative flex-1 flex flex-col min-h-0 pb-0 ${
+        isWork
+          ? 'min-h-dvh'
+          : 'min-h-screen min-h-dvh h-screen h-dvh'
+      }`}
       data-section={view}
     >
       <main
         className={`
-          relative z-[1] flex-1 min-h-0 w-full flex flex-col overflow-auto bg-transparent
-          ${view === 'work' ? 'scrollbar-glass scrollbar-glass-work-main' : '[scrollbar-gutter:stable]'}
+          relative z-[1] w-full flex flex-col bg-transparent
+          ${isWork ? 'min-h-0 flex-shrink-0 overflow-visible' : 'flex-1 min-h-0 overflow-auto'}
+          ${
+            isContact
+              ? 'scrollbar-glass scrollbar-glass-work-main'
+              : isWork
+                ? ''
+                : '[scrollbar-gutter:stable]'
+          }
           ${isFullBleed ? 'px-0' : CONTENT_PX}
         `}
       >
         <div
-          className={`min-h-full flex flex-col ${
-            isWork ? 'justify-start items-stretch pt-4 pb-10' : 'justify-center items-center'
+          className={`flex flex-col ${
+            isWork
+              ? 'min-h-0 justify-start items-stretch pt-4 pb-10'
+              : 'min-h-full justify-center items-center'
           }`}
         >
           <div
-            className={`flex-shrink-0 w-full flex flex-col min-w-0 ${
-              isFullBleed ? 'w-full' : isWork ? 'w-full' : CONTENT_COLUMN
+            className={`w-full flex flex-col min-w-0 ${
+              isFullBleed ? 'w-full' : isWork ? 'w-full flex-shrink-0' : `flex-shrink-0 ${CONTENT_COLUMN}`
             }`}
           >
             <h2
@@ -84,7 +98,9 @@ export function SectionBlock({ view, children }: SectionBlockProps) {
                 ${
                   isFullBleed
                     ? 'text-[clamp(1.25rem,4.5vw,1.6rem)] uppercase tracking-[0.2em] text-center'
-                    : 'text-[clamp(1.15rem,4.5vw,1.4rem)] tracking-wide text-left'
+                    : isWork
+                      ? 'text-[clamp(1.15rem,4.5vw,1.4rem)] tracking-wide text-center lg:text-left section-title-work-mobile'
+                      : 'text-[clamp(1.15rem,4.5vw,1.4rem)] tracking-wide text-left'
                 }
                 ${isFullBleed ? 'relative z-[2]' : ''}
                 ${isFullBleed ? CONTENT_PX : ''}
@@ -96,8 +112,10 @@ export function SectionBlock({ view, children }: SectionBlockProps) {
               {title}
             </h2>
             <div
-              className={`flex-1 min-h-0 flex flex-col min-w-0 ${
-                isWork ? 'justify-start items-stretch' : 'justify-center items-center'
+              className={`flex flex-col min-w-0 ${
+                isWork
+                  ? 'justify-start items-stretch'
+                  : 'flex-1 min-h-0 justify-center items-center'
               } ${isFullBleed ? 'relative z-[1]' : ''}`}
             >
               {children}

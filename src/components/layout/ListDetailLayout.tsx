@@ -2,6 +2,9 @@
  * Shared layout: sticky aside list + detail panel. Used by Projects and Experience views.
  */
 
+import type { ReactNode } from 'react'
+import { LIST_DETAIL_LIST_BUTTON_BASE, LIST_DETAIL_LIST_ITEM_DEFAULT_CLASS } from './listDetailShared'
+
 export type ListDetailItem = { id: string; label: string }
 
 type ListDetailLayoutProps = {
@@ -13,11 +16,8 @@ type ListDetailLayoutProps = {
   onSelect: (id: string) => void
   asideClassName?: string
   listItemClassName?: string
-  children: React.ReactNode
+  children: ReactNode
 }
-
-const LIST_BUTTON_BASE =
-  'cursor-target w-full box-border p-4 glass-card glass-card--no-shadow cursor-pointer text-left text-text-pri focus:outline-none focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2'
 
 export function ListDetailLayout({
   asideLabel,
@@ -27,7 +27,7 @@ export function ListDetailLayout({
   selectedId,
   onSelect,
   asideClassName = '',
-  listItemClassName = 'max-lg:min-w-[min(180px,75vw)] max-lg:snap-start',
+  listItemClassName = LIST_DETAIL_LIST_ITEM_DEFAULT_CLASS,
   children,
 }: ListDetailLayoutProps) {
   return (
@@ -36,7 +36,7 @@ export function ListDetailLayout({
         className={`sticky top-0 z-[1] flex flex-col gap-2 min-h-0 flex-1 lg:max-h-full max-lg:flex-initial bg-transparent ${asideClassName}`.trim()}
         aria-label={asideAriaLabel}
       >
-        <h2 className="font-display text-[0.7rem] font-bold tracking-widest text-text-soft m-0 pb-1.5 border-b border-[color:var(--glass-border)] flex-shrink-0">
+        <h2 className="font-display text-[0.7rem] font-bold tracking-widest text-text-soft m-0 pb-1.5 border-b border-[color:var(--glass-border)] flex-shrink-0 max-lg:sr-only max-lg:m-0 max-lg:border-0 max-lg:p-0">
           {asideLabel}
         </h2>
         <ul
@@ -54,7 +54,7 @@ export function ListDetailLayout({
               <button
                 type="button"
                 onClick={() => onSelect(item.id)}
-                className={`${LIST_BUTTON_BASE} max-lg:min-h-[48px] max-lg:py-3.5 max-lg:px-4 max-lg:active:scale-[0.98] ${item.id === selectedId ? '!border-accent' : ''}`}
+                className={`${LIST_DETAIL_LIST_BUTTON_BASE} max-lg:min-h-[48px] max-lg:py-3.5 max-lg:px-4 max-lg:active:scale-[0.98] ${item.id === selectedId ? '!border-accent' : ''}`}
               >
                 <span className="font-display text-[0.95rem] font-bold text-text-pri line-clamp-2 block">
                   {item.label}

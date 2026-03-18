@@ -26,5 +26,9 @@
   {
     "title": "Bachelor of Science in Computer Engineering — Florida International University — Miami, FL",
     "content": "Education: Bachelor of Science in Computer Engineering. Florida International University — Miami, FL. Period: Graduated Dec 2025. Coursework: Machine Learning, Data Structures & Algorithms, Systems Programming, Embedded Operating Systems, Computer Architecture, Analytics & Cloud Computing, Statistics & Probability, Linear Algebra. Skills: python, pytorch, numpy, c, linux, amazonaws."
+  },
+  {
+    "title": "3D hero model source",
+    "content": "The 3D computer hero model (public/computerModel.glb) was obtained from Meshy AI (meshy.ai)."
   }
 ]

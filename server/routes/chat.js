@@ -4,6 +4,7 @@ import { getRagContext } from '../services/rag.js'
 import { searchWeb } from '../services/webSearch.js'
 import { generateBlocks, shouldGenerateExampleBlocks } from '../services/blocks.js'
 import { sanitizeMessages } from '../services/sanitizeMessages.js'
+import { createStreamMathFormatter } from '../lib/streamMathFormatter.js'
 
 export function createChatRouter({
   chatLimiter,
@@ -66,6 +67,7 @@ export function createChatRouter({
       res.flushHeaders?.()
 
       let fullAnswer = ''
+      const formatter = createStreamMathFormatter()
       const stream = await openai.chat.completions.create({
         model: config.CHAT_MODEL,
         messages: apiMessages,
@@ -77,9 +79,13 @@ export function createChatRouter({
         const delta = chunk.choices[0]?.delta?.content
         if (delta) {
           fullAnswer += delta
-          writeNdjson(res, { type: 'delta', content: delta })
+          const formatted = formatter.push(delta)
+          if (formatted) writeNdjson(res, { type: 'delta', content: formatted })
         }
       }
+
+      const tail = formatter.flush()
+      if (tail) writeNdjson(res, { type: 'delta', content: tail })
 
       if (shouldGenerateExampleBlocks(lastQuestion)) {
         const blocks = await generateBlocks({

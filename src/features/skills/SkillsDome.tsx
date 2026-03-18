@@ -445,17 +445,15 @@ export function SkillsDome({
     onGameOver?.()
   }, [onGameOver])
 
-  // When game over: any key (or click) returns to normal globe
+  // When game over: keyboard only (not mouse) returns to normal globe
   useEffect(() => {
     if (!gameOver) return
-    const onKeyDown = () => resetToGlobe()
-    const onPointerDown = () => resetToGlobe()
-    window.addEventListener('keydown', onKeyDown)
-    window.addEventListener('pointerdown', onPointerDown)
-    return () => {
-      window.removeEventListener('keydown', onKeyDown)
-      window.removeEventListener('pointerdown', onPointerDown)
+    const onKeyDown = (e: KeyboardEvent) => {
+      resetToGlobe()
+      e.preventDefault()
     }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
   }, [gameOver, resetToGlobe])
 
   const spawnIntervalSec = METEOR_BASE_INTERVAL / Math.pow(2, wave)

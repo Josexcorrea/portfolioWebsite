@@ -47,11 +47,9 @@ export function ExperienceView({ selectedExperienceId, onSelectExperience, detai
             </h2>
             <p className="text-[1rem] md:text-[1.05rem] text-text-muted mb-1">{selected.subtitle}</p>
             <p className="text-[1rem] md:text-[1.05rem] text-accent mb-4 font-semibold">{selected.period}</p>
-            <ul className="m-0 pl-5 text-[1.05rem] md:text-[1.1rem] text-text-main leading-relaxed [&_li]:mb-2.5">
-              {selected.details.map((d, i) => (
-                <li key={i}>{d}</li>
-              ))}
-            </ul>
+            <p className="text-[1.05rem] md:text-[1.1rem] text-white leading-relaxed mb-4 break-words">
+              {selected.details.join(' ')}
+            </p>
             {selected.badges && selected.badges.length > 0 && (
               <SkillBadges badges={selected.badges} className="mt-3.5" ariaLabel="Skills applied" glareHover />
             )}

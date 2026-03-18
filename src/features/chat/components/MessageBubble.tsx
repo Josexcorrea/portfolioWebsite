@@ -19,7 +19,7 @@ export function MessageBubble({
         }
       >
         {isUser ? (
-          message.content
+          <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
         ) : message.content || (message.blocks && message.blocks.length > 0) ? (
           <AssistantRenderer content={message.content} blocks={message.blocks} />
         ) : isTyping ? (
