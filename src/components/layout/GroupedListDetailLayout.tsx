@@ -76,7 +76,7 @@ export function GroupedListDetailLayout({
                       onClick={() => onSelect(item.id)}
                       className={`${LIST_DETAIL_LIST_BUTTON_BASE} max-lg:min-h-[48px] max-lg:py-3.5 max-lg:px-4 max-lg:active:scale-[0.98] ${item.id === selectedId ? '!border-accent' : ''}`}
                     >
-                      <span className="font-display text-[0.95rem] font-bold text-text-pri line-clamp-2 block">
+                      <span className="font-display text-[0.95rem] font-bold text-text-pri line-clamp-2 block w-full text-center">
                         {item.label}
                       </span>
                     </button>

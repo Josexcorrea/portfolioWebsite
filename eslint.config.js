@@ -7,7 +7,7 @@ import eslintConfigPrettier from 'eslint-config-prettier'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist', 'node_modules', 'server', '**/embeddings.json']),
+  globalIgnores(['dist', 'node_modules', '**/embeddings.json']),
   {
     files: ['src/**/*.{ts,tsx}'],
     extends: [
@@ -23,6 +23,17 @@ export default defineConfig([
     rules: {
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/refs': 'off',
+    },
+  },
+  {
+    files: ['server/**/*.js'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+      },
     },
   },
   eslintConfigPrettier,

@@ -5,3 +5,4 @@
 export { default as ClickSpark } from './ClickSpark'
 export { default as GlareHover } from './GlareHover'
 export * from './SkillBadges'
+export * from './CaseStudySections'

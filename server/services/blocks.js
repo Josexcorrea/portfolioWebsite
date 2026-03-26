@@ -88,7 +88,7 @@ export function shouldGenerateExampleBlocks(question) {
 }
 
 export async function generateBlocks({ question, answer, openaiClient, model, maxTokens = DEFAULT_MAX_BLOCK_TOKENS }) {
-  const prompt = `You generate UI blocks for a portfolio chat widget.\n\nReturn STRICT JSON only (no markdown, no prose), with this shape:\n{\n  \"blocks\": [\n    {\n      \"type\": \"example\",\n      \"title\": \"string (optional)\",\n      \"summary\": \"string (optional)\",\n      \"steps\": [\"string\"],\n      \"code\": {\"language\":\"string(optional)\",\"text\":\"string\"},\n      \"links\": [{\"label\":\"string\",\"url\":\"string\"}]\n    }\n  ]\n}\n\nRules:\n- Output valid JSON.\n- Only include fields that add value.\n- If there is no useful example to show, return {\"blocks\":[]}.\n- Keep steps <= 6.\n- Keep code short and directly relevant.\n- Use https URLs only.\n\nQuestion:\n${question}\n\nAssistant answer:\n${answer}\n`
+  const prompt = `You generate UI blocks for a portfolio chat widget.\n\nReturn STRICT JSON only (no markdown, no prose), with this shape:\n{\n  "blocks": [\n    {\n      "type": "example",\n      "title": "string (optional)",\n      "summary": "string (optional)",\n      "steps": ["string"],\n      "code": {"language":"string(optional)","text":"string"},\n      "links": [{"label":"string","url":"string"}]\n    }\n  ]\n}\n\nRules:\n- Output valid JSON.\n- Only include fields that add value.\n- If there is no useful example to show, return {"blocks":[]}.\n- Keep steps <= 6.\n- Keep code short and directly relevant.\n- Use https URLs only.\n\nQuestion:\n${question}\n\nAssistant answer:\n${answer}\n`
 
   const resp = await openaiClient.chat.completions.create({
     model,

@@ -1,4 +1,5 @@
-import { Suspense, lazy, useEffect, useState } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
+import { useChatGlobe } from '@/contexts/ChatGlobeContext'
 
 const PortfolioChat = lazy(() => import('./PortfolioChat').then((m) => ({ default: m.PortfolioChat })))
 
@@ -35,7 +36,7 @@ const CLOSE_ICON = (
 )
 
 export function FloatingChatWidget() {
-  const [open, setOpen] = useState(false)
+  const { chatOpen: open, setChatOpen: setOpen, disarmSkillsGameSpace } = useChatGlobe()
 
   useEffect(() => {
     if (!open) return
@@ -44,7 +45,7 @@ export function FloatingChatWidget() {
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [open])
+  }, [open, setOpen])
 
   return (
     <>
@@ -55,6 +56,7 @@ export function FloatingChatWidget() {
           role="dialog"
           aria-label="Chat"
           aria-modal="false"
+          onPointerDownCapture={disarmSkillsGameSpace}
         >
           <div className="flex items-center justify-between flex-shrink-0 px-4 py-3 border-b border-border bg-black/20">
             <span className="text-sm font-medium text-white">Ask about my work</span>
@@ -78,7 +80,7 @@ export function FloatingChatWidget() {
       {/* Floating button */}
       <button
         type="button"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpen(!open)}
         className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-[99] w-14 h-14 rounded-full flex items-center justify-center text-white bg-accent border-2 border-white/20 shadow-[0_4px_24px_rgba(139,92,246,0.45)] hover:bg-accent/90 hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base transition-transform duration-200"
         style={{ marginBottom: 'env(safe-area-inset-bottom, 0)' }}
         aria-label={open ? 'Close chat' : 'Open chat'}

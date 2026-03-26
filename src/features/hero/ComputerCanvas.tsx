@@ -1,7 +1,6 @@
-import { Suspense, useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef, type ElementRef } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 import { OrbitControls, Environment, Float, Center } from '@react-three/drei'
-import type { OrbitControls as OrbitControlsType } from 'three-stdlib'
 import * as THREE from 'three'
 import { ComputerModel } from './ComputerModel'
 
@@ -10,7 +9,7 @@ const HERO_MODEL_PIVOT = new THREE.Vector3(0.45, 0.32, 0)
 
 /** Same as SkillsDome: drag orbits *around the computer*, not empty space off to the side. */
 function GlobeStyleOrbitControls() {
-  const ref = useRef<OrbitControlsType>(null)
+  const ref = useRef<ElementRef<typeof OrbitControls>>(null)
   const camera = useThree((s) => s.camera)
 
   useEffect(() => {

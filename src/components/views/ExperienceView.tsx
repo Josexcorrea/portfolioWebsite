@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { experiences } from '@/data/content'
 import type { ExperienceEntry } from '@/types'
-import { SkillBadges, ListDetailLayout, GlareHover } from '@/components'
+import { ImpactList, KeyLearningsList, ToolsTechnologies, ListDetailLayout, GlareHover } from '@/components'
 
 type ExperienceViewProps = {
   selectedExperienceId: string
@@ -47,12 +47,31 @@ export function ExperienceView({ selectedExperienceId, onSelectExperience, detai
             </h2>
             <p className="text-[1rem] md:text-[1.05rem] text-text-muted mb-1">{selected.subtitle}</p>
             <p className="text-[1rem] md:text-[1.05rem] text-accent mb-4 font-semibold">{selected.period}</p>
-            <p className="text-[1.05rem] md:text-[1.1rem] text-white leading-relaxed mb-4 break-words">
-              {selected.details.join(' ')}
-            </p>
-            {selected.badges && selected.badges.length > 0 && (
-              <SkillBadges badges={selected.badges} className="mt-3.5" ariaLabel="Skills applied" glareHover />
-            )}
+
+            {selected.mission || selected.system ? (
+              <>
+                {selected.mission ? (
+                  <div className="mb-4">
+                    <div className="font-display text-[0.7rem] font-bold uppercase tracking-widest text-text-soft mb-2">MISSION</div>
+                    <p className="text-[1.05rem] md:text-[1.1rem] text-white leading-relaxed break-words">{selected.mission}</p>
+                  </div>
+                ) : null}
+                {selected.system ? (
+                  <div className="mb-4">
+                    <div className="font-display text-[0.7rem] font-bold uppercase tracking-widest text-text-soft mb-2">SYSTEM</div>
+                    <p className="text-[1.05rem] md:text-[1.1rem] text-white leading-relaxed break-words">{selected.system}</p>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+
+            <ImpactList idPrefix={selected.id} items={selected.impact} />
+
+            {selected.badges && selected.badges.length > 0 ? (
+              <ToolsTechnologies badges={selected.badges} ariaLabel="Skills applied" className="mb-4" />
+            ) : null}
+
+            <KeyLearningsList idPrefix={selected.id} items={selected.keyLearnings} />
           </div>
           {hasPreview && (
             <button
@@ -75,10 +94,12 @@ export function ExperienceView({ selectedExperienceId, onSelectExperience, detai
             <div className="flex-1 min-h-[120px] glass-card glass-card--subtle overflow-hidden flex flex-col">
             {selected.id === 'jyj' ? (
               <div className="w-full flex-1 min-h-[120px] flex items-center justify-center bg-black/40">
-                <img
-                  src="/jyj-experience-preview.png"
-                  alt="JYJ Med & Spas experience preview"
-                  className="max-h-full max-w-full object-contain"
+                <video
+                  src="/jyj-website-demo.mp4"
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="w-full h-full min-h-0 object-contain bg-black/20"
                 />
               </div>
             ) : selected.type === 'education' ? (

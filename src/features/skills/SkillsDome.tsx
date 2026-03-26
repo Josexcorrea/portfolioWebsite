@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
+import { useChatGlobe } from '@/contexts/ChatGlobeContext'
 import { OrbitControls, Html } from '@react-three/drei'
 import * as THREE from 'three'
 import type { SkillBranch } from '@/types'
@@ -403,6 +404,8 @@ export function SkillsDome({
   onGameOver,
 }: SkillsDomeProps) {
   const isDesktop = useIsDesktop()
+  const { chatOpen, skillsGameSpaceArmed, armSkillsGameSpace } = useChatGlobe()
+  const spaceStartsGame = !chatOpen || skillsGameSpaceArmed
   const [gameStarted, setGameStarted] = useState(false)
   const [meteorScore, setMeteorScore] = useState(0)
   const [totalClicks, setTotalClicks] = useState(0)
@@ -413,6 +416,7 @@ export function SkillsDome({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code !== 'Space') return
       if (!isSectionActive) return
+      if (!spaceStartsGame) return
       e.preventDefault()
       setGameStarted((started) => {
         if (started) return started
@@ -422,7 +426,7 @@ export function SkillsDome({
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [isSectionActive, onGameStart])
+  }, [isSectionActive, onGameStart, spaceStartsGame])
 
   const handleMeteorHit = useCallback(() => {
     setMeteorScore((s) => s + 1)
@@ -468,6 +472,7 @@ export function SkillsDome({
     <div
       className="relative z-[1] flex-1 min-h-[80vh] w-full self-stretch"
       onClick={handleCanvasClick}
+      onPointerDownCapture={armSkillsGameSpace}
     >
       <Canvas
         camera={{ position: [0, 0, 5.2], fov: 50 }}
@@ -505,7 +510,7 @@ export function SkillsDome({
           style={{ fontFamily: "'Orbitron', sans-serif" }}
           aria-live="polite"
         >
-          Press Space to start · Click meteors · Right click + drag to rotate
+          {`${chatOpen ? 'Click the globe, then Space to start' : 'Press Space to start'} · Click meteors · Right click + drag to rotate`}
         </p>
       )}
       {isDesktop && gameStarted && (

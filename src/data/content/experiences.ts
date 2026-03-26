@@ -7,14 +7,20 @@ export const experiences: ExperienceEntry[] = [
     title: 'Full Stack Engineer (Contract)',
     subtitle: 'JyJ Med Spa — Miami, FL',
     period: 'Mar. – May 2022',
-    details: [
-      'Joined a small medical spa at an early stage and became their "technical team"—responsible for translating their ideas about branding, services, and operations into real software they could use day to day.',
-      'Designed and built the public marketing website using React and TypeScript so new clients could easily see services, pricing, and promotions. I set up domain, DNS, and hosting on GoDaddy so the site was fast, secure, and available on both desktop and mobile.',
-      'Spent time with the staff to understand how they were tracking products and supplies (mostly through spreadsheets and memory), then mapped that into a simple but structured inventory system that fit the way they already worked.',
-      'Inventory system objective: replace spreadsheet-and-memory tracking with one real-time desktop app—searchable SKUs, low-stock alerts, multi-user workflows, and Firebase login so only approved staff could change counts, giving owners confidence in accurate numbers.',
-      'Implemented a cross-platform desktop inventory management application with Electron on the frontend and a Python Flask backend. The app let staff adjust quantities, view low-stock alerts, and search across 20+ product SKUs in real time instead of manually reconciling notes and spreadsheets.',
-      'Integrated Firebase Authentication so that only approved users could log in and change inventory, reducing the chance of accidental edits and giving the owners more confidence in their numbers.',
-      'Packaged the system as an installer that non-technical staff could run themselves, documented the basic workflows, and walked the team through setup so adoption was smooth and they didn’t need an engineer on call for every small issue.',
+    mission:
+      'Translate business goals and day-to-day workflows into production-ready software—building both the public-facing marketing site and an internal inventory system that staff could actually use.',
+    system:
+      'React/TypeScript website with domain/DNS + hosting setup, plus an Electron + Python (Flask) inventory application. The desktop app integrates Firebase Authentication for access control, enables real-time SKU updates, and provides the workflows needed to replace spreadsheets with a reliable multi-user data source.',
+    impact: [
+      'Served as the spa’s technical partner—turning branding, services, and operations into software the team used daily.',
+      'Delivered a React/TypeScript marketing site with GoDaddy domain, DNS, and hosting; services and pricing worked on desktop and mobile.',
+      'Shipped an Electron + Flask inventory app with Firebase auth: searchable SKUs, live counts, low-stock alerts, and multi-user workflows that replaced spreadsheets.',
+      'Packaged an installer, documented workflows, and trained staff so adoption didn’t depend on an engineer on call.',
+    ],
+    keyLearnings: [
+      'Small-business software wins when workflows match how staff already work—schema follows the counter, not the other way around.',
+      'Splitting a public site from a restricted inventory app keeps marketing flexible without exposing internal data.',
+      'Auth and audit trails aren’t bureaucracy—they’re how owners trust the numbers.',
     ],
     badges: ['react', 'typescript', 'tailwindcss', 'electron', 'python', 'flask', 'firebase', 'html5', 'css3'],
   },
@@ -24,13 +30,20 @@ export const experiences: ExperienceEntry[] = [
     title: 'Software Engineer, AI Evaluation (Contract)',
     subtitle: 'Mercor — Remote',
     period: 'Jan. – Apr. 2023',
-    details: [
-      'Worked with a distributed team to evaluate how well large language models could solve real programming interview-style problems, focusing on both correctness and how robust the solutions were to edge cases.',
-      'Reviewed more than 200 AI-generated solutions across algorithms, data structures, operating systems, and databases, treating each one like a code review: I checked logic, performance characteristics, readability, and failure modes.',
-      'Implemented clean reference solutions and test harnesses in languages like Python, C, C++, Java, and TypeScript, so I could automatically compare the AI’s answers to known-good implementations instead of eyeballing the results.',
-      'Created systematic test cases that stressed boundary conditions (empty inputs, large inputs, invalid states, concurrency issues) to see where the AI’s code would silently fail or behave unpredictably.',
-      'Tracked recurring error patterns—such as off-by-one indexing, incorrect complexity assumptions, missing error handling, and unsafe memory usage—and summarized them in structured feedback that helped the team refine evaluation criteria.',
-      'Contributed to internal documentation and scoring rubrics so other evaluators could apply the same standards consistently, turning one-off observations into a repeatable evaluation process for future model iterations.',
+    mission:
+      'Evaluate whether large language models produce correct, robust solutions—then turn recurring failure patterns into clear feedback and repeatable evaluation criteria.',
+    system:
+      'A cross-language evaluation workflow using Python/C/C++/Java/TypeScript reference solutions and automated test harnesses. I generated boundary-focused test cases (edge cases, invalid states, concurrency), benchmarked outputs against known-good implementations, and summarized error patterns (off-by-one, incorrect complexity assumptions, missing error handling) into structured guidance for model iteration.',
+    impact: [
+      'Reviewed 200+ LLM-generated solutions across algorithms, data structures, OS, and databases with code-review rigor—correctness, complexity, readability, and failure modes.',
+      'Implemented reference solutions and harnesses in Python, C, C++, Java, and TypeScript for automated comparison to known-good code.',
+      'Stress-tested boundary conditions—empty/large/invalid inputs and concurrency—to expose silent failures and unstable behavior.',
+      'Documented recurring error patterns and scoring rubrics so evaluation stayed consistent as models iterated.',
+    ],
+    keyLearnings: [
+      'Model evaluation is a systems problem: without harnesses and oracles, “looks right” isn’t evidence.',
+      'The same class of bugs repeats—off-by-one, bad assumptions about complexity, missing error handling—until rubrics call them out.',
+      'Good feedback to model teams is structured, reproducible, and tied to specific failing tests.',
     ],
     badges: ['python', 'c', 'cplusplus', 'java', 'typescript', 'linux'],
   },
@@ -40,13 +53,20 @@ export const experiences: ExperienceEntry[] = [
     title: 'Bachelor of Science in Computer Engineering',
     subtitle: 'Florida International University — Miami, FL',
     period: 'Graduated Dec 2025',
-    details: [
-      'Completed a Computer Engineering degree that combined low-level hardware and systems knowledge with modern software development, giving me a solid understanding of how code actually runs on real machines.',
-      'Took core courses in data structures, algorithms, operating systems, computer architecture, and embedded systems, which trained me to think about performance, memory, and reliability—not just getting code to run.',
-      'Studied and implemented machine learning techniques in Python, working with libraries like NumPy and PyTorch to build models that could make predictions from noisy, real-world data.',
-      'Built team projects that connected sensors, microcontrollers, and software dashboards, such as systems that streamed live telemetry and visualized it in ways that were useful to non-technical teammates.',
-      'Gained practical experience with databases and cloud platforms (PostgreSQL, AWS, Azure, Firebase, and modern web stacks) and used them to build end-to-end applications rather than isolated class assignments.',
-      'Used what I learned in class to drive personal projects, like a sports-betting pricing engine and a Formula SAE telemetry platform, which helped me move from theory to building tools that people could actually use.',
+    mission:
+      'Build strong systems and software foundations by connecting coursework to real projects—especially where reliability, performance, and clear architecture matter.',
+    system:
+      'A curriculum spanning data structures/algorithms, operating systems, architecture, embedded systems, and cloud fundamentals, applied through team projects and personal builds (sports-betting ML pipeline and Formula SAE telemetry platform). Worked with modern tooling across databases/clouds and used Python/ML and web stacks to build end-to-end solutions rather than isolated assignments.',
+    impact: [
+      'Combined hardware-aware thinking with modern software: performance, memory, and reliability—not just “it compiles.”',
+      'Core depth in data structures, algorithms, OS, architecture, and embedded systems; ML in Python with NumPy and PyTorch on noisy, real-world data.',
+      'Team projects linked sensors, microcontrollers, and dashboards—telemetry non-engineers could actually use.',
+      'Applied the stack to end-to-end builds: PostgreSQL, AWS, Azure, Firebase, and personal projects like the sports pricing pipeline and Formula SAE telemetry.',
+    ],
+    keyLearnings: [
+      'Theory pays off when it shows up in firmware, kernels, and distributed systems—not only in interviews.',
+      'ML is useless without data hygiene: splits, leakage, and knowing what you’re optimizing.',
+      'Degree work is a license to build: coursework gave constraints; projects proved I could ship under them.',
     ],
     badges: ['python', 'c', 'cplusplus', 'java', 'typescript', 'react', 'linux', 'pytorch', 'numpy', 'postgresql', 'amazonaws', 'azure', 'fastapi', 'firebase'],
   },

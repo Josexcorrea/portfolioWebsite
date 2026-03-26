@@ -1,0 +1,4 @@
+{
+  "josexcorrea/sports-card": ["src/path/to/core.ts"],
+  "josexcorrea/shelfos": ["backend/models.py"]
+}

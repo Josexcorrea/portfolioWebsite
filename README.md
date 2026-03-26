@@ -70,7 +70,7 @@ src/
 
 ## Public assets
 
-Place static assets in `public/`. The app references at least: `favicon.svg`, `avatar.jpg`, `playerCard.png`, and any project preview images/videos listed in `src/data/content/projects.ts`. Add or adjust paths there if files differ.
+Place static assets in `public/`. The app references at least: `favicon.svg`, `pfp.jpeg` (see `src/data/site.ts`), `playerCard.png`, `computerModel.glb` (3D hero), plus project preview images/videos and PDFs listed in `src/data/content/projects.ts`. Add or adjust paths there if files differ.
 
 ## Server
 

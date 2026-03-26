@@ -88,8 +88,16 @@ function extractProjects() {
       const name = getPropString(obj, 'name')
       const tagline = getPropString(obj, 'tagline') || ''
       const description = getPropString(obj, 'description') || ''
+      const mission = getPropString(obj, 'mission') || ''
+      const system = getPropString(obj, 'system') || ''
+      const impact = getPropStringArray(obj, 'impact')
+      const keyLearnings = getPropStringArray(obj, 'keyLearnings')
       const badges = getPropStringArray(obj, 'badges')
-      return id && name ? { id, name, tagline, description, badges } : null
+      const code = getPropString(obj, 'code') || ''
+      const link = getPropString(obj, 'link') || ''
+      return id && name
+        ? { id, name, tagline, description, mission, system, impact, keyLearnings, badges, code, link }
+        : null
     })
     .filter(Boolean)
 }
@@ -107,9 +115,14 @@ function extractExperiences() {
       const title = getPropString(obj, 'title')
       const subtitle = getPropString(obj, 'subtitle') || ''
       const period = getPropString(obj, 'period') || ''
-      const details = getPropStringArray(obj, 'details')
+      const mission = getPropString(obj, 'mission') || ''
+      const system = getPropString(obj, 'system') || ''
+      const impact = getPropStringArray(obj, 'impact')
+      const keyLearnings = getPropStringArray(obj, 'keyLearnings')
       const badges = getPropStringArray(obj, 'badges')
-      return id && title ? { id, type, title, subtitle, period, details, badges } : null
+      return id && title
+        ? { id, type, title, subtitle, period, mission, system, impact, keyLearnings, badges }
+        : null
     })
     .filter(Boolean)
 }
@@ -118,21 +131,38 @@ function buildDocuments(projects, experiences) {
   const docs = []
 
   for (const p of projects) {
-    const tech = p.badges?.length ? ` Technologies: ${p.badges.join(', ')}.` : ''
+    const tech = p.badges?.length ? ` Tools & technologies: ${p.badges.join(', ')}.` : ''
     const desc = p.description.trim().replace(/\.$/, '')
+    const mission = p.mission ? ` Mission: ${p.mission.trim()}` : ''
+    const system = p.system ? ` System: ${p.system.trim()}` : ''
+    const impact =
+      p.impact?.length ? ` Impact: ${p.impact.map((x) => x.trim()).join(' ')}` : ''
+    const learn =
+      p.keyLearnings?.length
+        ? ` Key learnings: ${p.keyLearnings.map((x) => x.trim()).join(' ')}`
+        : ''
+    const repo = p.code?.trim() ? ` Public source code: ${p.code.trim()}.` : ''
+    const live = p.link?.trim() ? ` Public URL (optional): ${p.link.trim()}.` : ''
     docs.push({
       title: p.name,
-      content: `Project: ${p.name}. Tagline: ${p.tagline}. ${desc}.${tech}`,
+      content: `Project: ${p.name}. Tagline: ${p.tagline}. ${desc}.${mission}${system}${impact}${learn}${tech}${repo}${live}`,
     })
   }
 
   for (const e of experiences) {
-    const detailsText = e.details?.length ? e.details.join(' ') : ''
+    const mission = e.mission ? ` Mission: ${e.mission.trim()}` : ''
+    const system = e.system ? ` System: ${e.system.trim()}` : ''
+    const impact =
+      e.impact?.length ? ` Impact: ${e.impact.map((x) => x.trim()).join(' ')}` : ''
+    const learn =
+      e.keyLearnings?.length
+        ? ` Key learnings: ${e.keyLearnings.map((x) => x.trim()).join(' ')}`
+        : ''
     const skills = e.badges?.length ? ` Skills: ${e.badges.join(', ')}.` : ''
     const typeLabel = e.type === 'education' ? 'Education' : 'Role'
     docs.push({
       title: `${e.title} — ${e.subtitle}`,
-      content: `${typeLabel}: ${e.title}. ${e.subtitle}. Period: ${e.period}. ${detailsText}${skills}`,
+      content: `${typeLabel}: ${e.title}. ${e.subtitle}. Period: ${e.period}.${mission}${system}${impact}${learn}${skills}`,
     })
   }
 

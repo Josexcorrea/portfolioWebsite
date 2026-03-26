@@ -96,11 +96,14 @@ export function HomeView({ avatarError, onAvatarError }: HomeViewProps) {
                   <p className="max-w-2xl text-balance text-[0.9rem] text-text-sec/95 md:text-base">
                     I&apos;m a Computer Engineering graduate who enjoys building systems that combine software, data,
                     and real‑world applications. My work ranges from full‑stack applications to machine learning models
-                    and real‑time systems, with a focus on performance, reliability, and practical impact. I&apos;ve
-                    built projects like a machine learning engine that identifies pricing inefficiencies in sports
-                    markets and a real‑time telemetry platform for a Formula SAE race car&apos;s power distribution
-                    module, streaming live voltage, current, and temperature data. I&apos;m currently looking for roles
-                    in New York. Click the chat icon to ask my AI assistant about my projects, experience, and how I build things.
+                    and real‑time systems, with a focus on performance, reliability, and practical impact. Early on,
+                    I built the full-stack technical foundation for a growing med spa—from translating day-to-day workflows
+                    into an inventory system staff could actually use, to building the clinic&apos;s website, and evaluating and
+                    implementing the right tools for patient records and scheduling. I&apos;ve built projects like a sportsbook
+                    pricing engine that learns fair no‑vig prices from historical line movement (validated via CLV), and a real‑time
+                    telemetry platform for a Formula SAE race car&apos;s power distribution module that streams live voltage, current,
+                    and temperature data. I&apos;m currently looking for roles in New York. Click the chat icon to ask my AI assistant
+                    about my projects, experience, and how I build things.
                   </p>
                   <p className="text-[0.7rem] sm:text-xs font-medium uppercase tracking-[0.24em] text-text-muted/95">
                     Core tools: <span className="text-text-pri">Python</span> •{' '}

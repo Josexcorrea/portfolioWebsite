@@ -2,9 +2,8 @@ import { useMemo } from 'react'
 
 const DEFAULT_SUGGESTIONS = [
   'What are your top projects?',
-  'What stack do you use most?',
-  'Show me an example of your work style.',
   'Summarize your experience in 3 bullets.',
+  'What’s the weather in New York?',
 ]
 
 export function Composer({

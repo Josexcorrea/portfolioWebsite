@@ -1,5 +1,8 @@
 import 'dotenv/config'
 import { createServer } from './createServer.js'
+import { ensureEmbeddings } from './scripts/ensure-embeddings.js'
+
+await ensureEmbeddings()
 
 const { app, port } = createServer()
 
