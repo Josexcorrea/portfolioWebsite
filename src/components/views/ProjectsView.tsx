@@ -1,9 +1,7 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect } from 'react'
 import { projects } from '@/data/content'
 import type { Project } from '@/types'
 import { ImpactList, KeyLearningsList, ToolsTechnologies, ListDetailLayout } from '@/components'
-
-const ResearchPaperPdfViewer = lazy(() => import('@/components/ui/ResearchPaperPdfViewer'))
 
 type ProjectsViewProps = {
   selectedProjectId: string
@@ -112,18 +110,28 @@ export function ProjectsView({ selectedProjectId, onSelectProject, detailOnly = 
               <div className="flex h-full min-h-0 w-full flex-col">
                 <div className="flex min-h-0 flex-1 flex-col bg-black/20">
                   {previewStage === 'paper' ? (
-                    <Suspense
-                      fallback={
-                        <div className="flex min-h-[min(52vh,560px)] flex-1 flex-col items-center justify-center gap-2 text-text-muted">
-                          <span className="text-sm">Loading PDF viewer…</span>
-                        </div>
-                      }
-                    >
-                      <ResearchPaperPdfViewer
-                        url={selectedProject.researchPdfUrl}
-                        title={`${selectedProject.name} research paper`}
-                      />
-                    </Suspense>
+                    <>
+                      <div className="project-pdf-scroll hidden min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch] [touch-action:pan-x_pan-y] lg:flex">
+                        <iframe
+                          src={selectedProject.researchPdfUrl}
+                          title={`${selectedProject.name} research paper`}
+                          className="block h-full min-h-[min(52vh,560px)] w-full max-w-full flex-1 border-0"
+                        />
+                      </div>
+                      <div className="flex min-h-[min(52vh,560px)] flex-1 flex-col items-center justify-center gap-4 px-4 py-8 text-center lg:hidden">
+                        <p className="max-w-sm text-[0.9rem] text-text-muted leading-snug">
+                          Inline PDF doesn’t scroll reliably on phones. Open the paper in your browser to read every page.
+                        </p>
+                        <a
+                          href={selectedProject.researchPdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="cursor-target rounded-[10px] border border-border bg-surface py-3 px-5 font-display text-[0.85rem] font-bold uppercase tracking-wide text-text-pri active:scale-[0.98]"
+                        >
+                          Open research paper (PDF)
+                        </a>
+                      </div>
+                    </>
                   ) : selectedProject.previewType === 'video' && selectedProject.previewUrl ? (
                     <video
                       src={selectedProject.previewUrl}
