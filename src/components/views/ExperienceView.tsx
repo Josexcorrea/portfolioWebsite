@@ -93,10 +93,10 @@ export function ExperienceView({ selectedExperienceId, onSelectExperience, detai
           )}
         </div>
         {hasPreview && (
-          <div className="overflow-hidden min-h-0 min-w-0 flex flex-col">
-            <div className="flex-1 min-h-[120px] glass-card glass-card--subtle overflow-x-hidden overflow-y-auto overscroll-contain flex flex-col">
+          <div className="flex h-full min-h-0 min-w-0 max-h-full flex-col overflow-hidden">
+            <div className="glass-card glass-card--subtle scrollbar-glass flex h-full min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto touch-pan-y">
             {selected.id === 'jyj' ? (
-              <div className="w-full flex-1 min-h-[120px] flex items-center justify-center bg-black/40">
+              <div className="flex min-h-full w-full flex-1 flex-col items-center justify-center bg-black/40">
                 <video
                   src="/jyj-website-demo.mp4"
                   controls
@@ -106,15 +106,16 @@ export function ExperienceView({ selectedExperienceId, onSelectExperience, detai
                 />
               </div>
             ) : selected.type === 'education' ? (
-              <div className="w-full flex-1 min-h-0 min-w-0 grid grid-cols-1 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-6 md:gap-4 px-4 pt-8 pb-6 sm:px-5 sm:pt-10 sm:pb-8 md:px-6 md:pt-14 md:pb-10 text-text-soft text-[0.95rem] sm:text-[1rem]">
-                <div className="flex items-center justify-center min-h-0 min-w-0 py-1 md:py-0">
+              <div className="flex min-h-full w-full flex-col items-center justify-center px-4 py-6 sm:px-5 sm:py-8 md:px-6 md:py-10">
+                <div className="grid w-full max-w-[min(100%,42rem)] grid-cols-1 gap-6 text-text-soft text-[0.95rem] sm:text-[1rem] md:mx-auto md:max-w-[min(100%,56rem)] md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-5 md:items-start">
+                <div className="flex min-h-0 min-w-0 items-center justify-center py-1 md:py-0">
                   <img
                     src="/playerCard.png"
                     alt="Education player card"
-                    className="h-auto w-full max-w-[min(100%,340px)] md:max-w-full max-h-[min(42dvh,360px)] md:max-h-[min(70vh,520px)] object-contain object-center"
+                    className="h-auto w-full max-w-[min(100%,340px)] object-contain object-center md:max-h-[min(65dvh,480px)] md:max-w-full"
                   />
                 </div>
-                <div className="flex flex-col min-h-0 min-w-0">
+                <div className="flex min-h-0 min-w-0 flex-col items-center md:items-stretch">
                   <div className="mb-2">
                     <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3 text-[0.8rem] sm:text-[0.9rem]">
                       <div className="flex flex-col items-center gap-1">
@@ -192,7 +193,7 @@ export function ExperienceView({ selectedExperienceId, onSelectExperience, detai
                       </div>
                     </div>
                   </div>
-                    <div className="mt-4 sm:mt-5 flex-1 flex flex-col items-center">
+                    <div className="mt-4 sm:mt-5 flex w-full flex-col items-center">
                       <div className="text-[0.8rem] sm:text-[0.9rem] font-display uppercase tracking-wide text-text-soft mb-1.5 text-center">
                         Attributes
                       </div>
@@ -232,7 +233,7 @@ export function ExperienceView({ selectedExperienceId, onSelectExperience, detai
                           ))}
                         </div>
                       </div>
-                    <div className="mt-6 sm:mt-7 text-[0.85rem] sm:text-[0.9rem] text-text-main leading-snug text-center sm:text-left">
+                    <div className="mt-6 sm:mt-7 w-full max-w-prose text-[0.85rem] sm:text-[0.9rem] leading-snug text-text-main text-center md:max-w-none">
                       Developed a strong engineering foundation through FIU Computer Engineering
                       coursework in Machine Learning, Data Structures &amp; Algorithms, Systems
                       Programming, Embedded Systems, and Cloud Analytics. Leveraged these technical
@@ -243,9 +244,10 @@ export function ExperienceView({ selectedExperienceId, onSelectExperience, detai
                     </div>
                   </div>
                 </div>
+                </div>
               </div>
             ) : (
-              <div className="scrollbar-glass w-full flex-1 min-h-[120px] overflow-auto flex flex-col items-center justify-center gap-3 text-text-soft text-[0.9rem] p-6">
+              <div className="flex min-h-full w-full flex-1 flex-col items-center justify-center gap-3 p-6 text-[0.9rem] text-text-soft">
                 <span className="font-display text-accent font-bold uppercase tracking-widest text-sm">
                   Role
                 </span>
