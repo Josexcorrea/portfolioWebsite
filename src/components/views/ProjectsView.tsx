@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { projects } from '@/data/content'
 import type { Project } from '@/types'
 import { ImpactList, KeyLearningsList, ToolsTechnologies, ListDetailLayout } from '@/components'
+
+const ResearchPaperPdfViewer = lazy(() => import('@/components/ui/ResearchPaperPdfViewer'))
 
 type ProjectsViewProps = {
   selectedProjectId: string
@@ -110,13 +112,18 @@ export function ProjectsView({ selectedProjectId, onSelectProject, detailOnly = 
               <div className="flex h-full min-h-0 w-full flex-col">
                 <div className="flex min-h-0 flex-1 flex-col bg-black/20">
                   {previewStage === 'paper' ? (
-                    <div className="project-pdf-scroll flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch] [touch-action:pan-x_pan-y]">
-                      <iframe
-                        src={selectedProject.researchPdfUrl}
+                    <Suspense
+                      fallback={
+                        <div className="flex min-h-[min(52vh,560px)] flex-1 flex-col items-center justify-center gap-2 text-text-muted">
+                          <span className="text-sm">Loading PDF viewer…</span>
+                        </div>
+                      }
+                    >
+                      <ResearchPaperPdfViewer
+                        url={selectedProject.researchPdfUrl}
                         title={`${selectedProject.name} research paper`}
-                        className="block h-full min-h-[min(52vh,560px)] w-full max-w-full flex-1 border-0"
                       />
-                    </div>
+                    </Suspense>
                   ) : selectedProject.previewType === 'video' && selectedProject.previewUrl ? (
                     <video
                       src={selectedProject.previewUrl}
