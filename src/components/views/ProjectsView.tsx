@@ -32,7 +32,10 @@ export function ProjectsView({ selectedProjectId, onSelectProject, detailOnly = 
     <div
       className="grid min-h-0 min-w-0 gap-4 max-lg:gap-4 transition-[grid-template-rows] duration-300 ease-out"
       style={{
-        gridTemplateRows: hasPreview && previewOpen ? 'auto minmax(200px, 50vh)' : 'auto 0fr',
+        gridTemplateRows:
+          hasPreview && previewOpen
+            ? 'auto minmax(240px, min(65vh, 70dvh))'
+            : 'auto 0fr',
         gridTemplateColumns: '1fr',
       }}
     >
@@ -101,17 +104,19 @@ export function ProjectsView({ selectedProjectId, onSelectProject, detailOnly = 
           ) : null}
         </div>
       {hasPreview ? (
-        <div className="overflow-hidden min-h-0 min-w-0 flex flex-col">
-          <div className="flex-1 min-h-[200px] glass-card glass-card--subtle overflow-hidden flex flex-col items-stretch justify-stretch bg-black/20">
+        <div className="min-h-0 min-w-0 flex flex-col overflow-hidden">
+          <div className="glass-card glass-card--subtle flex min-h-0 flex-1 flex-col items-stretch justify-stretch overflow-hidden bg-black/20">
             {selectedProject.researchPdfUrl ? (
-              <div className="w-full h-full flex flex-col">
-                <div className="flex-1 min-h-0 w-full bg-black/20">
+              <div className="flex h-full min-h-0 w-full flex-col">
+                <div className="flex min-h-0 flex-1 flex-col bg-black/20">
                   {previewStage === 'paper' ? (
-                    <iframe
-                      src={selectedProject.researchPdfUrl}
-                      title={`${selectedProject.name} research paper`}
-                      className="w-full h-full min-h-0 border-0"
-                    />
+                    <div className="project-pdf-scroll flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain [-webkit-overflow-scrolling:touch] [touch-action:pan-x_pan-y]">
+                      <iframe
+                        src={selectedProject.researchPdfUrl}
+                        title={`${selectedProject.name} research paper`}
+                        className="block h-full min-h-[min(52vh,560px)] w-full max-w-full flex-1 border-0"
+                      />
+                    </div>
                   ) : selectedProject.previewType === 'video' && selectedProject.previewUrl ? (
                     <video
                       src={selectedProject.previewUrl}
