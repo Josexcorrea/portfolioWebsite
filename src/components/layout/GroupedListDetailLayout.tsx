@@ -45,7 +45,7 @@ export function GroupedListDetailLayout({
             {asideLabel}
           </h2>
         ) : null}
-        <div className="scrollbar-glass flex min-h-0 flex-1 flex-col gap-5 overflow-x-hidden overflow-y-auto touch-pan-y max-lg:max-h-[140px] max-lg:flex-row max-lg:gap-6 max-lg:overflow-x-auto max-lg:overflow-y-hidden max-lg:snap-x max-lg:snap-mandatory">
+        <div className="scrollbar-glass flex min-h-0 flex-1 flex-col gap-5 overflow-x-hidden overflow-y-auto max-lg:touch-pan-x lg:touch-pan-y max-lg:overscroll-x-contain max-lg:max-h-[140px] max-lg:flex-row max-lg:gap-6 max-lg:overflow-x-auto max-lg:overflow-y-hidden max-lg:snap-x max-lg:snap-mandatory">
           {groups.map((group) => (
             <div
               key={group.groupId}

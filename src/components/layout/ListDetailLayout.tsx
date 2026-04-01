@@ -40,7 +40,7 @@ export function ListDetailLayout({
           {asideLabel}
         </h2>
         <ul
-          className="scrollbar-glass list-none m-0 p-0 flex flex-col gap-2 overflow-y-auto overflow-x-hidden min-h-0 flex-1 touch-pan-y max-lg:flex-row max-lg:max-h-[100px] max-lg:overflow-x-auto max-lg:overflow-y-hidden max-lg:gap-3 max-lg:snap-x max-lg:snap-mandatory"
+          className="scrollbar-glass list-none m-0 p-0 flex flex-col gap-2 overflow-y-auto overflow-x-hidden min-h-0 flex-1 max-lg:touch-pan-x lg:touch-pan-y max-lg:overscroll-x-contain max-lg:flex-row max-lg:max-h-[100px] max-lg:overflow-x-auto max-lg:overflow-y-hidden max-lg:gap-3 max-lg:snap-x max-lg:snap-mandatory"
           role="listbox"
           aria-label={listboxAriaLabel}
         >

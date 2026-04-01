@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback } from 'react'
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { contactItems } from '@/data/content'
 import type { ContactItem } from '@/types'
 
@@ -100,7 +100,22 @@ export function ContactView() {
   const [orbExpanded, setOrbExpanded] = useState(false)
   const [mouse, setMouse] = useState<{ x: number; y: number } | null>(null)
   const [ripple, setRipple] = useState<{ id: string; x: number; y: number } | null>(null)
+  const hubWrapRef = useRef<HTMLDivElement>(null)
   const hubRef = useRef<HTMLDivElement>(null)
+  const [hubScale, setHubScale] = useState(1)
+
+  useEffect(() => {
+    const el = hubWrapRef.current
+    if (!el) return
+    const update = () => {
+      const w = el.clientWidth
+      setHubScale(w > 0 ? Math.min(1, w / HUB_SIZE) : 1)
+    }
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const lineSegments = useMemo(
     () =>
@@ -115,9 +130,11 @@ export function ContactView() {
     const el = hubRef.current
     if (!el) return
     const rect = el.getBoundingClientRect()
+    const rw = rect.width || 1
+    const rh = rect.height || 1
     setMouse({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: ((e.clientX - rect.left) / rw) * HUB_SIZE,
+      y: ((e.clientY - rect.top) / rh) * HUB_SIZE,
     })
   }, [])
 
@@ -178,16 +195,29 @@ export function ContactView() {
         />
       </div>
 
-      {/* Hub centered in viewport */}
+      {/* Hub centered in viewport; scales down on narrow screens so orbit fits without clipping */}
       <div className="relative z-[1] flex-1 flex items-center justify-center min-h-[calc(100dvh-8rem)] w-full">
         <div
-          ref={hubRef}
-          className="relative flex items-center justify-center"
-          style={{ width: HUB_SIZE, height: HUB_SIZE }}
-          aria-label="Contact hub"
-          onMouseMove={handleHubMouseMove}
-          onMouseLeave={handleHubMouseLeave}
+          ref={hubWrapRef}
+          className="relative w-full max-w-[580px] aspect-square mx-auto"
         >
+          <div
+            className="absolute left-1/2 top-1/2 flex items-center justify-center"
+            style={{
+              width: HUB_SIZE,
+              height: HUB_SIZE,
+              transform: `translate(-50%, -50%) scale(${hubScale})`,
+              transformOrigin: 'center center',
+            }}
+          >
+            <div
+              ref={hubRef}
+              className="relative flex items-center justify-center"
+              style={{ width: HUB_SIZE, height: HUB_SIZE }}
+              aria-label="Contact hub"
+              onMouseMove={handleHubMouseMove}
+              onMouseLeave={handleHubMouseLeave}
+            >
           {/* Lines: always visible, glow, energy pulse; brighter on card hover */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden>
             {lineSegments.map((seg) => (
@@ -293,6 +323,8 @@ export function ContactView() {
               </a>
             )
           })}
+            </div>
+          </div>
         </div>
       </div>
     </div>
