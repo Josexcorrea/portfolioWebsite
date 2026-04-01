@@ -1,4 +1,5 @@
 {
+  "buildCommand": "npm run rebuild-knowledge && npm run build",
   "functions": {
     "api/chat.js": {
       "includeFiles": "server/knowledge/**"

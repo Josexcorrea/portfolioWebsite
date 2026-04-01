@@ -50,7 +50,8 @@ npm run dev:full     # Vite + Express (recommended for full-stack local dev)
 
 | Command | Purpose |
 |---------|---------|
-| `npm run build` | Typecheck and production build to `dist/`. |
+| `npm start` | **`rebuild-knowledge` + production build** (same as [`vercel.json`](./vercel.json) build). Use for local checks only if `OPENAI_API_KEY` / `GITHUB_TOKEN` are set; **not** for day-to-day dev. Some hosts default to `npm start` — this avoids accidentally running dev servers. For local dev, use **`npm run dev:full`**. |
+| `npm run build` | Typecheck and production build to `dist/` (skips knowledge rebuild). |
 | `npm run preview` | Serve the production build locally. |
 | `npm run check` | `typecheck` then `lint`. |
 
@@ -62,9 +63,9 @@ Copy [`.env.example`](./.env.example) to `.env` at the repo root. **`OPENAI_API_
 
 ### Vercel
 
-1. Connect the repository. Use build command `npm run build` and output directory `dist`.
-2. Set environment variables in the project settings (at minimum `OPENAI_API_KEY`; optional keys are listed in `.env.example`).
-3. RAG requires vector data in the deployment: commit [`server/knowledge/embeddings.json`](./server/knowledge/embeddings.json) or generate it in CI before deploy (`npm run rebuild-knowledge`). [`vercel.json`](./vercel.json) includes `server/knowledge/**` in the serverless function bundle.
+1. Connect the repository. **Output directory:** `dist`. The **build command** is set in [`vercel.json`](./vercel.json): `npm run rebuild-knowledge && npm run build` so each deploy refreshes `documents.json` + GitHub-indexed chunks + `embeddings.json`, then builds the SPA. (If the Vercel dashboard overrides **Build Command**, either remove the override or set it to the same command.)
+2. Set environment variables for **Production** (and **Preview** if you use preview deploys). For Path B, these must be available at **build** time: **`OPENAI_API_KEY`** (embeddings), **`GITHUB_TOKEN`** (repo fetch; use a classic PAT with `repo` for private repos). Optional: **`GITHUB_FULL_TREE=true`** for deeper indexing (see `.env.example` for limits). Runtime chat still needs **`OPENAI_API_KEY`** on the serverless function (same vars apply).
+3. [`vercel.json`](./vercel.json) bundles `server/knowledge/**` into the `api/chat` function so the freshly built `embeddings.json` is included. You do **not** need to commit `embeddings.json` if every deploy runs `rebuild-knowledge`.
 4. Optional: configure Upstash Redis (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) and `RATE_LIMIT_MAX` for per-IP limits on the serverless route. Without Redis, the function does not apply the same throttling as local Express.
 
 Local development: `npm run dev` does not start the API. Use **`npm run dev:full`** so Vite proxies `/api` to Express on port 3001 ([`vite.config.ts`](./vite.config.ts)).
