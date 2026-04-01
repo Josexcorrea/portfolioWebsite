@@ -16,8 +16,8 @@ function heroFramingForAspect(canvasAspect: number): { distMult: number; fov: nu
   const narrow = Math.max(0, 1.25 - a)
   const wide = Math.max(0, a - 1.85)
 
-  const distMult = THREE.MathUtils.clamp(1 + narrow * 0.52 + wide * 0.16, 0.95, 1.75)
-  const fov = THREE.MathUtils.clamp(40 + narrow * 11 - Math.min(wide * 2, 3), 36, 54)
+  const distMult = THREE.MathUtils.clamp(1 + narrow * 0.58 + wide * 0.22, 1.02, 1.95)
+  const fov = THREE.MathUtils.clamp(43 + narrow * 10 - Math.min(wide * 2, 2), 38, 56)
 
   return { distMult, fov }
 }
@@ -51,7 +51,7 @@ function GlobeStyleOrbitControls() {
       const baseDist = defaultCam.distanceTo(legacyTarget)
       const canvasAspect = w / h
       const { distMult, fov } = heroFramingForAspect(canvasAspect)
-      const dist = baseDist * 1.2 * distMult
+      const dist = baseDist * 1.38 * distMult
 
       const persp = camera as THREE.PerspectiveCamera
       if (persp.isPerspectiveCamera) {
@@ -154,7 +154,7 @@ export function ComputerCanvas() {
   return (
     <div className="w-full h-full min-h-[300px] md:min-h-[380px] lg:min-h-[min(58vh,640px)]">
       <Canvas
-        camera={{ position: [2.3, 1.65, 3.55], fov: 40, near: 0.05, far: 100 }}
+        camera={{ position: [2.3, 1.65, 3.55], fov: 43, near: 0.05, far: 100 }}
         shadows
         dpr={[1, 2]}
         gl={{ alpha: true, antialias: true, powerPreference: 'high-performance' }}

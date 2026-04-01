@@ -36,7 +36,10 @@ export function ExperienceView({ selectedExperienceId, onSelectExperience, detai
     <div
       className="grid min-h-0 min-w-0 gap-4 max-lg:gap-3 transition-[grid-template-rows] duration-300 ease-out"
       style={{
-        gridTemplateRows: hasPreview && previewOpen ? 'auto minmax(120px, 50vh)' : 'auto 0fr',
+        gridTemplateRows:
+          hasPreview && previewOpen
+            ? 'auto minmax(140px, min(88dvh, 960px))'
+            : 'auto 0fr',
         gridTemplateColumns: '1fr',
       }}
     >
@@ -91,7 +94,7 @@ export function ExperienceView({ selectedExperienceId, onSelectExperience, detai
         </div>
         {hasPreview && (
           <div className="overflow-hidden min-h-0 min-w-0 flex flex-col">
-            <div className="flex-1 min-h-[120px] glass-card glass-card--subtle overflow-hidden flex flex-col">
+            <div className="flex-1 min-h-[120px] glass-card glass-card--subtle overflow-x-hidden overflow-y-auto overscroll-contain flex flex-col">
             {selected.id === 'jyj' ? (
               <div className="w-full flex-1 min-h-[120px] flex items-center justify-center bg-black/40">
                 <video
@@ -103,17 +106,17 @@ export function ExperienceView({ selectedExperienceId, onSelectExperience, detai
                 />
               </div>
             ) : selected.type === 'education' ? (
-              <div className="w-full flex-1 min-h-[120px] grid grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-4 px-6 pt-14 pb-10 text-text-soft text-[0.95rem] sm:text-[1rem]">
-                <div className="flex items-center justify-center min-h-0">
+              <div className="w-full flex-1 min-h-0 min-w-0 grid grid-cols-1 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-6 md:gap-4 px-4 pt-8 pb-6 sm:px-5 sm:pt-10 sm:pb-8 md:px-6 md:pt-14 md:pb-10 text-text-soft text-[0.95rem] sm:text-[1rem]">
+                <div className="flex items-center justify-center min-h-0 min-w-0 py-1 md:py-0">
                   <img
                     src="/playerCard.png"
                     alt="Education player card"
-                    className="max-h-full w-auto max-w-full object-contain"
+                    className="h-auto w-full max-w-[min(100%,340px)] md:max-w-full max-h-[min(42dvh,360px)] md:max-h-[min(70vh,520px)] object-contain object-center"
                   />
                 </div>
-                <div className="flex flex-col min-w-0">
+                <div className="flex flex-col min-h-0 min-w-0">
                   <div className="mb-2">
-                    <div className="grid grid-cols-2 gap-3 text-[0.8rem] sm:text-[0.9rem]">
+                    <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-3 text-[0.8rem] sm:text-[0.9rem]">
                       <div className="flex flex-col items-center gap-1">
                         <span className="text-[0.8rem] sm:text-[0.85rem] font-display uppercase tracking-wide text-text-soft">
                           Concentration I
