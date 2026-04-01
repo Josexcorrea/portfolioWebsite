@@ -90,7 +90,9 @@ function reducer(state: State, action: Action): State {
       const { assistantId, error } = action.payload
       const messages = updateMessageById(state.messages, assistantId, (m) => {
         if (m.role !== 'assistant') return m
-        const content = m.content ? m.content : `Error: ${error}`
+        const content = m.content
+          ? m.content
+          : `Error: ${error?.trim() || 'Request failed. Ensure the chat API is deployed and OPENAI_API_KEY is set (e.g. in Vercel env).'}`
         return { ...m, content, status: 'error' }
       })
       return {

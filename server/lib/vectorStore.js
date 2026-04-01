@@ -4,6 +4,16 @@ import path from 'path'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
+/** Prefer path next to this module; fall back to repo root (Vercel serverless bundle layout). */
+function resolveEmbeddingsPath(explicit) {
+  if (explicit) return explicit
+  const fromLib = path.join(__dirname, '..', 'knowledge', 'embeddings.json')
+  if (existsSync(fromLib)) return fromLib
+  const fromCwd = path.join(process.cwd(), 'server', 'knowledge', 'embeddings.json')
+  if (existsSync(fromCwd)) return fromCwd
+  return fromLib
+}
+
 /** Cosine similarity between two vectors. */
 function cosineSimilarity(a, b) {
   if (a.length !== b.length) return 0
@@ -24,7 +34,7 @@ function cosineSimilarity(a, b) {
  * @param {string} [filePath] - Path to JSON file (default: server/knowledge/embeddings.json)
  */
 export function createFileVectorStore(filePath = null) {
-  const fp = filePath || path.join(__dirname, '..', 'knowledge', 'embeddings.json')
+  const fp = resolveEmbeddingsPath(filePath)
 
   function load() {
     if (!existsSync(fp)) return []
@@ -70,7 +80,7 @@ export function createFileVectorStore(filePath = null) {
  * Intended for the chat API runtime (avoids JSON parse on every request).
  */
 export function createCachedFileVectorStore(filePath = null) {
-  const fp = filePath || path.join(__dirname, '..', 'knowledge', 'embeddings.json')
+  const fp = resolveEmbeddingsPath(filePath)
 
   let cache = null
   let cachedMtimeMs = 0
