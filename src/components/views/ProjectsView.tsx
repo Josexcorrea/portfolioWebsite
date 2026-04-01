@@ -71,28 +71,16 @@ export function ProjectsView({ selectedProjectId, onSelectProject, detailOnly = 
             ) : null}
 
             <KeyLearningsList idPrefix={selectedProject.id} items={selectedProject.keyLearnings ?? []} />
-            {(selectedProject.link || selectedProject.code) && (
+            {selectedProject.link && (
               <div className="flex gap-2 flex-wrap">
-                {selectedProject.link && (
-                  <a
-                    href={selectedProject.link}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="cursor-target py-2 px-3.5 rounded-[10px] font-display text-[0.85rem] font-bold uppercase tracking-wide border border-border bg-surface transition-colors duration-200 text-text-pri active:scale-[0.98]"
-                  >
-                    View Live
-                  </a>
-                )}
-                {selectedProject.code && (
-                  <a
-                    href={selectedProject.code}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="cursor-target py-2 px-3.5 rounded-[10px] font-display text-[0.85rem] font-bold uppercase tracking-wide border border-border bg-surface transition-colors duration-200 text-text-pri active:scale-[0.98]"
-                  >
-                    View Code
-                  </a>
-                )}
+                <a
+                  href={selectedProject.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="cursor-target py-2 px-3.5 rounded-[10px] font-display text-[0.85rem] font-bold uppercase tracking-wide border border-border bg-surface transition-colors duration-200 text-text-pri active:scale-[0.98]"
+                >
+                  View Live
+                </a>
               </div>
             )}
           </div>

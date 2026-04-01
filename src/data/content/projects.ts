@@ -1,11 +1,40 @@
 /**
- * Optional `code`: public GitHub repo URL — “View Code” + indexed for chat (see `npm run build-knowledge`, README fetch).
+ * Optional `code`: public GitHub repo URL — indexed for chat (see `npm run build-knowledge`, README fetch).
  * Username matches contact (`josexcorrea`); change repo slugs if your GitHub names differ. Remove `code` if private.
  * Optional `link`: any public URL for “View Live” (not required for the site).
  */
 import type { Project } from '@/types'
 
 export const projects: Project[] = [
+  {
+    id: 'pdm',
+    name: 'Power Distribution Module',
+    tagline: 'FIU Formula SAE',
+    dateMade: '2025',
+    mission:
+      'Make electrical failures diagnosable in minutes, not hours, by turning noisy serial telemetry into clear, real-time channel health and repeatable test workflows. The goal is safer validation and faster iteration under race-week constraints.',
+    system:
+      'A real-time monitoring and control stack with a Python (Flask) backend and an Electron desktop application (React + TypeScript). The system ingests a 58-byte serial telemetry stream (~10 Hz), validates frames (checksum + defensive parsing), decodes voltage/current/temperature per channel, and exposes channel control + test-mode workflows for repeatable failure-mode investigation.',
+    description:
+      'Led software development for an 8-channel PDM monitoring and control tool for an FIU Formula SAE race car, where fast feedback and reliability are non-negotiable. Built a Python (Flask) backend and Electron desktop app (React + TypeScript) that ingests a 58-byte serial stream (~10 Hz), validates frames, and decodes channel voltage/current/temperature into operator-friendly diagnostics. The UI highlights abnormal conditions, supports channel-level control, and provides repeatable test modes so the team can reproduce faults and verify fixes quickly. Implemented defensive parsing so corrupt/partial frames don’t crash the app, bridging raw electrical data into safe, actionable decisions.',
+    impact: [
+      'Continuous ~10 Hz telemetry with checksum validation and defensive parsing so corrupt frames don’t take down the session.',
+      'Per-channel voltage, current, and temperature surfaced for fast triage during bring-up and race-week debugging.',
+      'Channel control and repeatable test modes to reproduce faults and confirm fixes without guesswork.',
+      'Desktop UI suitable for garage and trackside use—readable state, not just a raw serial log.',
+      'Research write-up (PDF) documents methodology and results for handoff to future team members.',
+    ],
+    keyLearnings: [
+      'Embedded UIs are trust UIs: operators need clear limits, units, and “what failed” without reading hex.',
+      'Serial protocols reward paranoia—assume noise, partial reads, and out-of-order bytes.',
+      'Telemetry software is part of the safety story: if the display lies or crashes, validation stops.',
+    ],
+    badges: ['python', 'flask', 'react', 'typescript', 'tailwindcss', 'electron'],
+    code: 'https://github.com/josexcorrea/fiu-pdm',
+    previewType: 'video',
+    previewUrl: '/pdmDemo.mp4',
+    researchPdfUrl: '/Pdm-report.pdf',
+  },
   {
     id: 'sports-betting',
     name: 'Sports Card',
@@ -68,35 +97,6 @@ export const projects: Project[] = [
     code: 'https://github.com/josexcorrea/portfolio-website',
     previewType: 'site',
     // No previewUrl on purpose: the user is already on the site.
-  },
-  {
-    id: 'pdm',
-    name: 'Power Distribution Module',
-    tagline: 'FIU Formula SAE',
-    dateMade: '2025',
-    mission:
-      'Make electrical failures diagnosable in minutes, not hours, by turning noisy serial telemetry into clear, real-time channel health and repeatable test workflows. The goal is safer validation and faster iteration under race-week constraints.',
-    system:
-      'A real-time monitoring and control stack with a Python (Flask) backend and an Electron desktop application (React + TypeScript). The system ingests a 58-byte serial telemetry stream (~10 Hz), validates frames (checksum + defensive parsing), decodes voltage/current/temperature per channel, and exposes channel control + test-mode workflows for repeatable failure-mode investigation.',
-    description:
-      'Led software development for an 8-channel PDM monitoring and control tool for an FIU Formula SAE race car, where fast feedback and reliability are non-negotiable. Built a Python (Flask) backend and Electron desktop app (React + TypeScript) that ingests a 58-byte serial stream (~10 Hz), validates frames, and decodes channel voltage/current/temperature into operator-friendly diagnostics. The UI highlights abnormal conditions, supports channel-level control, and provides repeatable test modes so the team can reproduce faults and verify fixes quickly. Implemented defensive parsing so corrupt/partial frames don’t crash the app, bridging raw electrical data into safe, actionable decisions.',
-    impact: [
-      'Continuous ~10 Hz telemetry with checksum validation and defensive parsing so corrupt frames don’t take down the session.',
-      'Per-channel voltage, current, and temperature surfaced for fast triage during bring-up and race-week debugging.',
-      'Channel control and repeatable test modes to reproduce faults and confirm fixes without guesswork.',
-      'Desktop UI suitable for garage and trackside use—readable state, not just a raw serial log.',
-      'Research write-up (PDF) documents methodology and results for handoff to future team members.',
-    ],
-    keyLearnings: [
-      'Embedded UIs are trust UIs: operators need clear limits, units, and “what failed” without reading hex.',
-      'Serial protocols reward paranoia—assume noise, partial reads, and out-of-order bytes.',
-      'Telemetry software is part of the safety story: if the display lies or crashes, validation stops.',
-    ],
-    badges: ['python', 'flask', 'react', 'typescript', 'tailwindcss', 'electron'],
-    code: 'https://github.com/josexcorrea/fiu-pdm',
-    previewType: 'video',
-    previewUrl: '/pdmDemo.mp4',
-    researchPdfUrl: '/Pdm-report.pdf',
   },
   {
     id: 'netflix-clone',
