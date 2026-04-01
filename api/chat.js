@@ -2,7 +2,8 @@
  * Vercel serverless entry for POST /api/chat (streaming NDJSON).
  *
  * Deployment:
- * - Vercel runs `npm run build` (Vite → dist) and deploys static assets + this function.
+ * - Vercel build is defined in vercel.json: `npm run rebuild-knowledge && npm run build` (Path B: fresh RAG
+ *   embeddings on each deploy), then static `dist` + this function. Package `start` script matches that pipeline.
  * - Set secrets in Vercel → Project → Settings → Environment Variables (see .env.example):
  *   OPENAI_API_KEY (required), optional TAVILY_API_KEY, OPENAI_MODEL, RAG_* tuning, etc.
  * - RAG needs server/knowledge/embeddings.json bundled: vercel.json `includeFiles` for server/knowledge/**.
