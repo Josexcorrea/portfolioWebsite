@@ -52,6 +52,7 @@ export function createFileVectorStore(filePath = null) {
     async search(queryEmbedding, opts = {}) {
       const topK = opts.topK ?? 3
       const minScore = opts.minScore ?? 0
+      const includeScores = Boolean(opts.includeScores)
       const records = load()
       if (records.length === 0) return []
       const withScore = records.map((r) => ({
@@ -62,7 +63,11 @@ export function createFileVectorStore(filePath = null) {
       return withScore
         .filter((r) => r.score >= minScore)
         .slice(0, topK)
-        .map(({ chunkText, documentTitle }) => ({ chunkText, documentTitle }))
+        .map((r) => {
+          const row = { chunkText: r.chunkText, documentTitle: r.documentTitle }
+          if (includeScores) row.score = r.score
+          return row
+        })
     },
 
     /**
@@ -105,6 +110,7 @@ export function createCachedFileVectorStore(filePath = null) {
     async search(queryEmbedding, opts = {}) {
       const topK = opts.topK ?? 3
       const minScore = opts.minScore ?? 0
+      const includeScores = Boolean(opts.includeScores)
       const records = loadCached()
       if (records.length === 0) return []
 
@@ -116,7 +122,11 @@ export function createCachedFileVectorStore(filePath = null) {
       return withScore
         .filter((r) => r.score >= minScore)
         .slice(0, topK)
-        .map(({ chunkText, documentTitle }) => ({ chunkText, documentTitle }))
+        .map((r) => {
+          const row = { chunkText: r.chunkText, documentTitle: r.documentTitle }
+          if (includeScores) row.score = r.score
+          return row
+        })
     },
 
     async save(records) {

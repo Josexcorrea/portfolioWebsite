@@ -59,10 +59,13 @@ function buildSiteImplementationNotes() {
   )
 
   lines.push('- Chat API endpoint: POST /api/chat (server/routes/chat.js).')
-  lines.push('- RAG context: server/knowledge/* and vector store in server/lib/vectorStore.js.')
-  lines.push('- Web search: Tavily (env: TAVILY_API_KEY) in server/services/webSearch.js.')
   lines.push(
-    '- Chat length / retrieval (env): MAX_COMPLETION_TOKENS (default 256), MAX_COMPLETION_TOKENS_DETAIL (default 2048), RAG_TOP_K (default 3), RAG_TOP_K_DETAIL (default 12), RAG_MIN_SCORE_DETAIL (default 0.18, detail questions only). Detail mode triggers on phrases like "technical", "architecture", "in depth", "explain how".',
+    '- Production deployment: Vercel serves the Vite SPA from dist/ and runs the chat API as a serverless function at api/chat.js (same handler as Express). Build is configured in vercel.json (rebuild-knowledge + vite build). Alternative: run server/index.js as a single Node process with NODE_ENV=production to serve dist/ and /api on one origin (see README Deployment).',
+  )
+  lines.push('- RAG context: server/knowledge/* and vector store in server/lib/vectorStore.js.')
+  lines.push('- Web search: Tavily (env: TAVILY_API_KEY) in server/services/webSearch.js; used when retrieval is weak or the question needs fresh web facts—not for every request.')
+  lines.push(
+    '- Chat length / retrieval (env): MAX_COMPLETION_TOKENS (default 256), MAX_COMPLETION_TOKENS_WITH_RAG (default 384, when indexed passages are retrieved), MAX_COMPLETION_TOKENS_DETAIL (default 2048), RAG_TOP_K (default 3), RAG_TOP_K_DETAIL (default 12), RAG_MIN_SCORE_DETAIL (default 0.18, detail questions only). Detail mode triggers on phrases like "technical", "architecture", "in depth", "explain how", stack/compare/design options.',
   )
   lines.push(
     '- GitHub for RAG: `npm run build-knowledge` — optional full tree (`GITHUB_FULL_TREE=true`, server/lib/githubFullTreeIndex.js) or partial paths (githubRepoFetch.js). `npm run verify-github` checks raw URLs. Env: GITHUB_TOKEN recommended, GITHUB_FETCH_REPO=false skips all GitHub fetches.',
@@ -86,6 +89,8 @@ export function buildChatRuntime() {
     RAG_MIN_SCORE: parseFloat(process.env.RAG_MIN_SCORE || '0.25'),
     RAG_MIN_SCORE_DETAIL: parseFloat(process.env.RAG_MIN_SCORE_DETAIL || '0.18'),
     MAX_COMPLETION_TOKENS: parseInt(process.env.MAX_COMPLETION_TOKENS || '256', 10),
+    /** When RAG returns chunks but not detail mode, floor completion length so quotes + answer fit. */
+    MAX_COMPLETION_TOKENS_WITH_RAG: parseInt(process.env.MAX_COMPLETION_TOKENS_WITH_RAG || '384', 10),
     MAX_COMPLETION_TOKENS_DETAIL: parseInt(process.env.MAX_COMPLETION_TOKENS_DETAIL || '2048', 10),
     systemPromptBase: `You are a concise, friendly assistant for Jose Correa's portfolio website.
 
@@ -98,6 +103,7 @@ Style rules:
 
 Knowledge rules:
 - Use the portfolio context to answer questions about Jose's projects, experience, and background. The context may include excerpts from public GitHub (README, configs, and—if enabled at build time—filtered source files from full-tree indexing), plus site copy and PDFs. Prefer technical details from those excerpts when answering in-depth questions.
+- **Quoting RAG sources:** The "## Portfolio context" section labels passages as **[S1], [S2], …** When you state a concrete fact drawn from those passages (projects, roles, tech, collaborators, metrics), include **at least one short verbatim quote** in straight double quotes copied from the tagged passage, then cite the tag in parentheses or after the quote (example format: a quoted phrase from the passage, then ([S1])). Keep each quote to one sentence or a short phrase (about 40 words max) unless the user explicitly wants a longer excerpt. If multiple facts come from the same source, one well-chosen quote can cover them. Purely site-meta questions (only implementation notes, no [S*] blocks) do not need a passage quote.
 - "Who did Jose work on?": interpret as "which projects/roles did Jose work on" and answer using the portfolio context (and any matching research PDF chunks in the retrieved context).
 - "Who did Jose work with?"/"who did he work with on ...?": interpret as collaborators/teammates/other people named in the research PDF or other indexed passages.
   - For the Power Distribution Module / PDM: only list names that appear in the provided context; if you can't find collaborator names in the retrieved context, say you couldn't find them in the indexed sources and point to the Experience & Projects section (and the PDM research PDF in Projects). Do not infer names.
@@ -106,7 +112,9 @@ Knowledge rules:
 - Use the tech stack section below to answer "what stack is this site built with?" and "how did you build X on the site?" questions.
 - When asked how something works on the site, explain the approach at a high level and mention the relevant parts (frontend, backend API, RAG, web search) without claiming features that aren't in the context.
 - For asset-origin questions (e.g. “where did the 3D model come from?”): only answer with what is known from the implementation notes (file path, where it is loaded, whether it exists in the repo). Do not guess a source like Sketchfab/CAD unless that source is explicitly provided in the context.
-- When web search results are provided, you may answer general questions using them.
+- When web search results are provided, use them for fresh or general web facts; for questions about this portfolio site’s stack, deployment, or repo layout, prefer the site implementation notes and portfolio context above—do not contradict them with generic web articles.
+- **Live / real-time facts (weather, sports scores, stock prices, breaking news):** Only state numbers, temperatures, or other factual details that appear verbatim in the **## Web search results** section. If that section is missing, empty, or the search failed, say live data could not be retrieved—do not invent or guess figures.
+- Questions like "how is this site deployed" or "where does the backend run" must be answered from the implementation notes (Vercel serverless api/chat.js vs optional Express) unless the portfolio context adds detail.
 - If you still do not know the answer, say you don't know instead of making something up.
 - Never tell the user that "no relevant context" was found; speak naturally and point to the site sections if knowledge is thin.
 
@@ -121,6 +129,7 @@ Detail / technical mode (the app may append extra instructions when the user ask
 The user asked for detailed / technical / architectural explanation.
 - Use multiple short paragraphs and/or bullet lists so the answer is easy to scan.
 - Prefer concrete terms from the portfolio context (stacks, subsystems, constraints, evaluation methods).
+- When [S1]/[S2]/… passages support your points, include one or two short **verbatim quotes** with tags as in the main instructions; in technical mode you may add a second quote from another [S*] if it clarifies architecture or stack.
 - If something is not in the context, say what is unknown rather than inventing internals.
 - If a public repository URL appears in the portfolio context for the relevant project, you may include it once at the end under a line like "Source:".
 `.trim()

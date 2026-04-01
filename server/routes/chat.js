@@ -24,9 +24,54 @@ function isDetailTechnicalQuestion(qLower) {
     /\bthoroughly\b/,
     /\bcomprehensive\b/,
     /\bdesign (details|choices|decisions)\b/,
+    /\b(what|which) design\b/,
+    /\b(option|options)\s+(one|two|1|2|three|3)\b/,
+    /\btrade[- ]?offs?\b/,
+    /\bwhy (choose|did|pick)\b/,
+    /\bconstraint(s)?\b/,
+    /\brequirement(s)?\b/,
+    /\bcompare\b|\bversus\b|\bvs\.?\b/,
+    /\b(the )?stack\b/,
+    /\blow[- ]level\b/,
     /\bgo (into|in) detail\b/,
+    /\b(deploy|deployment|deployed|hosted|hosting|production|vercel|serverless|ci\/cd)\b/,
+    /\bhow (was|is|were)\b.+\b(backend|api|server)\b/,
+    /\bfsae\b|\bformula sae\b/,
+    /\bpdm\b|\bpower distribution\b/,
+    /\becu\b|\bcan bus\b|\btelemetry\b/,
   ]
   return patterns.some((p) => p.test(qLower))
+}
+
+/** Real-time or general-web questions where Tavily helps; portfolio-meta questions skip web to avoid noise. */
+function looksLikeFreshnessOrGeneralWebQuery(qLower) {
+  return /\b(weather|forecast|temperature|humidity|stock price|exchange rate|news today|breaking news|score (of|for) the|who won|nba |nfl )\b/i.test(
+    qLower,
+  )
+}
+
+function looksLikeThisPortfolioMetaQuestion(qLower) {
+  return (
+    /\b(this portfolio|portfolio website|this site|this website|your site|jose'?s (site|portfolio)|the site'?s)\b/.test(
+      qLower,
+    ) &&
+    /\b(deploy|deployment|deployed|hosted|hosting|backend|vercel|api\/chat|\/api\/chat|rag|how (does|is|was).+ built)\b/.test(
+      qLower,
+    )
+  )
+}
+
+/**
+ * @param {{ maxScore: number, chunksLen: number }} rag
+ */
+function shouldRunWebSearch(lastQuestion, rag) {
+  if (!process.env.TAVILY_API_KEY) return false
+  const qLower = lastQuestion.toLowerCase()
+  if (looksLikeFreshnessOrGeneralWebQuery(qLower)) return true
+  if (looksLikeThisPortfolioMetaQuestion(qLower)) return false
+  const strongPortfolioMatch = rag.chunksLen >= 1 && rag.maxScore >= 0.33
+  if (strongPortfolioMatch) return false
+  return true
 }
 
 /**
@@ -82,7 +127,7 @@ export async function executeChatPost(req, res, { openai, config, store }) {
       ragMinScore = Math.min(ragMinScore, detailFloor)
     }
 
-    const { chunks, context } = await getRagContext({
+    const { chunks, context, maxScore } = await getRagContext({
       question: lastQuestion,
       openai,
       store,
@@ -136,7 +181,9 @@ export async function executeChatPost(req, res, { openai, config, store }) {
       return
     }
 
-    const webResults = await searchWeb(lastQuestion)
+    const webResults = shouldRunWebSearch(lastQuestion, { maxScore, chunksLen: chunks.length })
+      ? await searchWeb(lastQuestion, { weakRag: maxScore < 0.28 && chunks.length < 2 })
+      : null
     let webContext = ''
     if (webResults && webResults.length > 0) {
       webContext = webResults
@@ -153,7 +200,14 @@ export async function executeChatPost(req, res, { openai, config, store }) {
 
     const apiMessages = [{ role: 'system', content: systemContent }, ...messages]
 
-    const maxTokens = wantsDetail ? config.MAX_COMPLETION_TOKENS_DETAIL : config.MAX_COMPLETION_TOKENS
+    let maxTokens = wantsDetail ? config.MAX_COMPLETION_TOKENS_DETAIL : config.MAX_COMPLETION_TOKENS
+    if (!wantsDetail && chunks.length > 0) {
+      const floor =
+        typeof config.MAX_COMPLETION_TOKENS_WITH_RAG === 'number'
+          ? config.MAX_COMPLETION_TOKENS_WITH_RAG
+          : 384
+      maxTokens = Math.max(maxTokens, floor)
+    }
 
     res.setHeader('Content-Type', 'application/x-ndjson')
     res.setHeader('Cache-Control', 'no-cache')
@@ -202,6 +256,8 @@ export async function executeChatPost(req, res, { openai, config, store }) {
         route: '/api/chat',
         ok: true,
         ragChunks: chunks.length,
+        ragMaxScore: maxScore,
+        webSearch: Boolean(webResults?.length),
         detailMode: wantsDetail,
         maxTokens,
       }),

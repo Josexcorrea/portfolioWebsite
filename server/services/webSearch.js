@@ -1,6 +1,12 @@
-export async function searchWeb(query) {
+/**
+ * @param {string} query
+ * @param {{ weakRag?: boolean }} [opts] - When true, ask for deeper search (more results) to compensate for thin RAG.
+ */
+export async function searchWeb(query, opts = {}) {
   const apiKey = process.env.TAVILY_API_KEY
   if (!apiKey || !query) return null
+
+  const weakRag = Boolean(opts.weakRag)
 
   try {
     const response = await fetch('https://api.tavily.com/search', {
@@ -11,7 +17,9 @@ export async function searchWeb(query) {
       },
       body: JSON.stringify({
         query,
-        max_results: 4,
+        max_results: weakRag ? 6 : 4,
+        search_depth: weakRag ? 'advanced' : 'basic',
+        topic: 'general',
       }),
     })
 
