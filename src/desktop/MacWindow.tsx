@@ -4,6 +4,7 @@ import { useDesktop } from './DesktopContext'
 import { MacWindowControls } from './MacWindowControls'
 import { useDrag } from './useDrag'
 import { useResize, type ResizeEdge } from './useResize'
+import { useMobileLauncher } from './useMobileLauncher'
 import {
   type AppId,
   type LayoutSlot,
@@ -115,6 +116,7 @@ export function MacWindow({ appId, title, children }: MacWindowProps) {
     layoutMetrics,
   } = useDesktop()
   const win = windows[appId]
+  const mobileLauncher = useMobileLauncher()
   const [hoverZone, setHoverZone] = useState<SnapZone>(null)
 
   const windowCandidates = Object.entries(windows)
@@ -122,6 +124,7 @@ export function MacWindow({ appId, title, children }: MacWindowProps) {
     .sort((a, b) => b[1].zIndex - a[1].zIndex) as [AppId, typeof win][]
 
   const applySnap = (zone: SnapZone) => {
+    if (mobileLauncher) return
     if (!zone) {
       return
     }
@@ -171,7 +174,6 @@ export function MacWindow({ appId, title, children }: MacWindowProps) {
   )
 
   if (!win.isOpen) return null
-  if (win.isMinimized && win.animPhase === 'idle') return null
 
   const isFocused = focusedApp === appId
   const phase = win.animPhase
@@ -211,7 +213,7 @@ export function MacWindow({ appId, title, children }: MacWindowProps) {
   return (
     <>
       {/* Snap preview overlay — portaled to body so .mac-window overflow:hidden doesn't clip it */}
-      {hoverZone && createPortal(
+      {!mobileLauncher && hoverZone && createPortal(
         <div
           className="snap-preview"
           style={{
@@ -232,6 +234,7 @@ export function MacWindow({ appId, title, children }: MacWindowProps) {
           isFocused ? 'mac-window--focused' : '',
           isMaximizedOrTop ? 'mac-window--maximized' : '',
           isSnapped && !isMaximizedOrTop ? 'mac-window--snapped' : '',
+          mobileLauncher ? 'mac-window--mobile' : '',
         ].filter(Boolean).join(' ')}
         data-app-id={appId}
         style={windowStyle}
@@ -242,11 +245,13 @@ export function MacWindow({ appId, title, children }: MacWindowProps) {
         <div
           className="mac-titlebar"
           onPointerDown={(e) => {
-            handleDragStart(e, win.position.x, win.position.y)
+            if (!mobileLauncher) {
+              handleDragStart(e, win.position.x, win.position.y)
+            }
           }}
-          onPointerMove={handleDragMove}
-          onPointerUp={(e) => handleDragEnd(e)}
-          onPointerCancel={() => handleDragEnd()}
+          onPointerMove={mobileLauncher ? undefined : handleDragMove}
+          onPointerUp={mobileLauncher ? undefined : (e) => handleDragEnd(e)}
+          onPointerCancel={mobileLauncher ? undefined : () => handleDragEnd()}
         >
           <MacWindowControls appId={appId} />
           <span className="mac-titlebar-title">{title}</span>

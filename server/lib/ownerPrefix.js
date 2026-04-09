@@ -4,14 +4,11 @@
  */
 export function parseOwnerPrefix(raw) {
   const prefix = (process.env.PORTFOLIO_OWNER_PREFIX || '').trim()
-  if (!prefix) {
-    return { ownerMode: false, questionForRag: raw }
-  }
   const normalizedRaw = raw == null ? '' : String(raw)
   const trimmed = normalizedRaw.trimStart()
-  if (!trimmed.startsWith(prefix)) {
-    return { ownerMode: false, questionForRag: raw }
+  if (prefix && trimmed.startsWith(prefix)) {
+    const rest = trimmed.slice(prefix.length).trimStart()
+    return { ownerMode: true, questionForRag: rest }
   }
-  const rest = trimmed.slice(prefix.length).trimStart()
-  return { ownerMode: true, questionForRag: rest }
+  return { ownerMode: false, questionForRag: raw }
 }

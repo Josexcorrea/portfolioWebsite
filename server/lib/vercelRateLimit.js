@@ -3,10 +3,12 @@ import { Redis } from '@upstash/redis'
 
 /** @type {Ratelimit | null | undefined} undefined = not yet resolved */
 let ratelimit = undefined
+const inMemoryHits = new Map()
+const WINDOW_MS = 60_000
 
 /**
  * Per-IP sliding window for Vercel serverless (matches Express RATE_LIMIT_MAX / minute intent).
- * If UPSTASH_* env vars are missing, allows all requests (local dev / no Redis).
+ * Uses Upstash when configured; falls back to in-memory best-effort limiting.
  */
 function getRatelimit() {
   if (ratelimit !== undefined) return ratelimit
@@ -39,13 +41,28 @@ function clientIp(req) {
   return '127.0.0.1'
 }
 
+function inMemoryLimit(identifier) {
+  const max = parseInt(process.env.RATE_LIMIT_MAX || '20', 10)
+  const now = Date.now()
+  const windowStart = now - WINDOW_MS
+  const current = inMemoryHits.get(identifier) || []
+  const next = current.filter((t) => t >= windowStart)
+  if (next.length >= max) {
+    inMemoryHits.set(identifier, next)
+    return false
+  }
+  next.push(now)
+  inMemoryHits.set(identifier, next)
+  return true
+}
+
 /**
  * @returns {Promise<{ allowed: boolean }>}
  */
 export async function limitChatRequestOrPass(req) {
-  const rl = getRatelimit()
-  if (!rl) return { allowed: true }
   const identifier = clientIp(req)
+  const rl = getRatelimit()
+  if (!rl) return { allowed: inMemoryLimit(identifier) }
   const { success } = await rl.limit(identifier)
   return { allowed: success }
 }

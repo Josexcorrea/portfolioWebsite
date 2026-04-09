@@ -1,18 +1,9 @@
 import type { ExampleCardBlock } from '../types'
+import { safeExternalHref } from '../utils/safeExternalHref'
 
 function copyToClipboard(text: string) {
   if (!text) return
   void navigator.clipboard?.writeText(text)
-}
-
-function safeExternalHref(raw: string): string | null {
-  try {
-    const u = new URL(raw)
-    if (u.protocol !== 'https:') return null
-    return u.toString()
-  } catch {
-    return null
-  }
 }
 
 export function ExampleCard({

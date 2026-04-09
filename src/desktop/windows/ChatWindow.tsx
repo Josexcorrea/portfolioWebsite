@@ -107,17 +107,47 @@ function MessageScroller({
   lightMode: boolean
 }) {
   const listRef = useRef<HTMLDivElement>(null)
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true)
+  const lastUserMessageIdRef = useRef<string | null>(null)
+
+  const isNearBottom = useCallback((el: HTMLDivElement) => {
+    const threshold = 24
+    return el.scrollTop + el.clientHeight >= el.scrollHeight - threshold
+  }, [])
+
+  const handleScroll = useCallback(() => {
+    const el = listRef.current
+    if (!el) return
+    if (!isNearBottom(el)) {
+      setAutoScrollEnabled(false)
+    }
+  }, [isNearBottom])
 
   useEffect(() => {
     const el = listRef.current
     if (!el) return
+    const lastUser = [...messages].reverse().find((m) => m.role === 'user')
+    const lastUserId = lastUser?.id ?? null
+    if (lastUserId && lastUserId !== lastUserMessageIdRef.current) {
+      lastUserMessageIdRef.current = lastUserId
+      setAutoScrollEnabled(true)
+      requestAnimationFrame(() => {
+        const node = listRef.current
+        if (!node) return
+        node.scrollTo({ top: node.scrollHeight, behavior: 'smooth' })
+      })
+      return
+    }
+
+    if (!autoScrollEnabled) return
     el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
-  }, [messages])
+  }, [messages, autoScrollEnabled])
 
   return (
     <div
       ref={listRef}
       className="chat-win-messages scrollbar-glass"
+      onScroll={handleScroll}
       aria-label="Chat messages"
       aria-live="polite"
       aria-relevant="additions text"
@@ -143,7 +173,7 @@ function ChatContent() {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const { theme } = useDesktop()
-  const { messages, loading, error, sendUserText } = useChatController()
+  const { messages, loading, error, ownerModeLatched, sendUserText } = useChatController()
   const hasMessages = messages.length > 0
 
   const handleSubmit = useCallback(
@@ -178,7 +208,9 @@ function ChatContent() {
         </div>
         <div className="chat-win-header-status">
           <span className="chat-win-status-dot" aria-hidden />
-          <span className="chat-win-status-label">Active</span>
+          <span className={ownerModeLatched ? 'chat-win-status-label chat-win-status-label--owner' : 'chat-win-status-label'}>
+            {ownerModeLatched ? 'Owner03' : 'Active'}
+          </span>
         </div>
         {hasMessages && (
           <button

@@ -81,6 +81,12 @@ export function shouldGenerateExampleBlocks(question) {
     q.includes('show me') ||
     q.includes('how do i') ||
     q.includes('how to') ||
+    q.includes('explain') ||
+    q.includes('teach me') ||
+    q.includes('walk me through') ||
+    q.includes('compare') ||
+    q.includes('interview') ||
+    q.includes('cheat sheet') ||
     q.includes('code') ||
     q.includes('snippet') ||
     q.includes('steps')

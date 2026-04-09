@@ -110,6 +110,8 @@ export type DesktopAction =
   | { type: 'TILE_WINDOWS' }
   /** Re-clamp all open window sizes/positions to the current viewport. */
   | { type: 'CLAMP_ALL' }
+  /** On mobile viewports, force open windows to fill the usable area. */
+  | { type: 'FORCE_MOBILE_FIT' }
   /** Sync window geometry with measured menu bar + dock (from ResizeObserver). */
   | { type: 'SET_LAYOUT_METRICS'; metrics: LayoutMetrics }
 

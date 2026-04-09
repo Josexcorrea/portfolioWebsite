@@ -29,6 +29,27 @@ function cosineSimilarity(a, b) {
   return denom === 0 ? 0 : dot / denom
 }
 
+function scoreAndSelect(records, queryEmbedding, opts = {}) {
+  const topK = opts.topK ?? 3
+  const minScore = opts.minScore ?? 0
+  const includeScores = Boolean(opts.includeScores)
+  if (!records || records.length === 0) return []
+
+  const withScore = records.map((r) => ({
+    ...r,
+    score: cosineSimilarity(queryEmbedding, r.embedding),
+  }))
+  withScore.sort((a, b) => b.score - a.score)
+  return withScore
+    .filter((r) => r.score >= minScore)
+    .slice(0, topK)
+    .map((r) => {
+      const row = { chunkText: r.chunkText, documentTitle: r.documentTitle }
+      if (includeScores) row.score = r.score
+      return row
+    })
+}
+
 /**
  * File-based vector store for dev. Records: { id, chunkText, documentTitle, embedding }.
  * @param {string} [filePath] - Path to JSON file (default: server/knowledge/embeddings.json)
@@ -50,24 +71,8 @@ export function createFileVectorStore(filePath = null) {
      * @returns {Promise<Array<{ chunkText: string, documentTitle: string }>>}
      */
     async search(queryEmbedding, opts = {}) {
-      const topK = opts.topK ?? 3
-      const minScore = opts.minScore ?? 0
-      const includeScores = Boolean(opts.includeScores)
       const records = load()
-      if (records.length === 0) return []
-      const withScore = records.map((r) => ({
-        ...r,
-        score: cosineSimilarity(queryEmbedding, r.embedding),
-      }))
-      withScore.sort((a, b) => b.score - a.score)
-      return withScore
-        .filter((r) => r.score >= minScore)
-        .slice(0, topK)
-        .map((r) => {
-          const row = { chunkText: r.chunkText, documentTitle: r.documentTitle }
-          if (includeScores) row.score = r.score
-          return row
-        })
+      return scoreAndSelect(records, queryEmbedding, opts)
     },
 
     /**
@@ -108,25 +113,8 @@ export function createCachedFileVectorStore(filePath = null) {
 
   return {
     async search(queryEmbedding, opts = {}) {
-      const topK = opts.topK ?? 3
-      const minScore = opts.minScore ?? 0
-      const includeScores = Boolean(opts.includeScores)
       const records = loadCached()
-      if (records.length === 0) return []
-
-      const withScore = records.map((r) => ({
-        ...r,
-        score: cosineSimilarity(queryEmbedding, r.embedding),
-      }))
-      withScore.sort((a, b) => b.score - a.score)
-      return withScore
-        .filter((r) => r.score >= minScore)
-        .slice(0, topK)
-        .map((r) => {
-          const row = { chunkText: r.chunkText, documentTitle: r.documentTitle }
-          if (includeScores) row.score = r.score
-          return row
-        })
+      return scoreAndSelect(records, queryEmbedding, opts)
     },
 
     async save(records) {

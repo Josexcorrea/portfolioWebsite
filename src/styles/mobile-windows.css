@@ -1,0 +1,30 @@
+@media (max-width: 767px) {
+  .mac-window--mobile .mac-titlebar {
+    cursor: default;
+    touch-action: manipulation;
+  }
+
+  .mac-window--mobile .mac-window-content {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mac-window--mobile.mac-window--maximized,
+  .mac-window--mobile.mac-window--snapped {
+    width: 100vw !important;
+    left: 0 !important;
+    right: 0 !important;
+  }
+}
+
+@media (max-width: 767px) and (orientation: landscape) {
+  .mac-window--mobile .mac-titlebar {
+    height: 34px;
+    min-height: 34px;
+  }
+
+  .mac-window--mobile .mac-window-content {
+    overflow-y: auto;
+  }
+}
+

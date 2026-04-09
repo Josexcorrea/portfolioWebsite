@@ -1,81 +1,12 @@
 import OpenAI from 'openai'
-import { existsSync, readFileSync } from 'fs'
-import path from 'path'
 import { createCachedFileVectorStore } from './vectorStore.js'
-
-function buildTechStackSummary() {
-  try {
-    const pkgPath = path.join(process.cwd(), 'package.json')
-    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'))
-    const deps = pkg?.dependencies || {}
-    const devDeps = pkg?.devDependencies || {}
-
-    const has = (name) => Boolean(deps?.[name] || devDeps?.[name])
-    const v = (name) => deps?.[name] || devDeps?.[name] || ''
-
-    const lines = []
-    if (has('react')) lines.push(`- Frontend: React ${v('react')}`.trim())
-    if (has('vite')) lines.push(`- Build/dev: Vite ${v('vite')}`.trim())
-    if (has('typescript')) lines.push(`- Language: TypeScript ${v('typescript')}`.trim())
-    if (has('tailwindcss')) lines.push(`- Styling: Tailwind CSS ${v('tailwindcss')}`.trim())
-    if (has('three') || has('@react-three/fiber') || has('@react-three/drei')) {
-      lines.push(
-        `- 3D: three.js ${v('three')}, @react-three/fiber ${v('@react-three/fiber')}, @react-three/drei ${v('@react-three/drei')}`.trim(),
-      )
-    }
-    if (has('express')) lines.push(`- Backend: Node.js + Express ${v('express')}`.trim())
-    if (has('openai')) lines.push(`- AI chat: OpenAI SDK ${v('openai')} (RAG + web search)`.trim())
-    if (has('dotenv')) lines.push(`- Config: dotenv ${v('dotenv')}`.trim())
-    if (has('helmet') || has('cors') || has('express-rate-limit')) {
-      lines.push(
-        `- Security: helmet ${v('helmet')}, cors ${v('cors')}, express-rate-limit ${v('express-rate-limit')}`.trim(),
-      )
-    }
-    if (has('react-markdown') || has('remark-gfm') || has('rehype-sanitize')) {
-      lines.push(
-        `- Markdown: react-markdown ${v('react-markdown')}, remark-gfm ${v('remark-gfm')}, rehype-sanitize ${v('rehype-sanitize')}`.trim(),
-      )
-    }
-
-    return lines.length ? lines.join('\n') : 'Tech stack: (unavailable).'
-  } catch {
-    return 'Tech stack: (unavailable).'
-  }
-}
-
-function buildSiteImplementationNotes() {
-  const lines = []
-
-  const computerModelPublicPath = '/computerModel.glb'
-  const computerModelFsPath = path.join(process.cwd(), 'public', 'computerModel.glb')
-  const computerModelPresent = existsSync(computerModelFsPath)
-  lines.push(
-    `- 3D hero model: ${computerModelPublicPath} (loaded in src/features/hero/ComputerModel.tsx via @react-three/drei useGLTF). File present in public/: ${
-      computerModelPresent ? 'yes' : 'no'
-    }.`,
-  )
-  lines.push(
-    '- 3D model origin/attribution: generated/downloaded from Meshy AI (meshy.ai).',
-  )
-
-  lines.push('- Chat API endpoint: POST /api/chat (server/routes/chat.js).')
-  lines.push(
-    '- Production deployment: Vercel serves the Vite SPA from dist/ and runs the chat API as a serverless function at api/chat.js (same handler as Express). Build is configured in vercel.json (rebuild-knowledge + vite build). Alternative: run server/index.js as a single Node process with NODE_ENV=production to serve dist/ and /api on one origin (see README Deployment).',
-  )
-  lines.push('- RAG context: server/knowledge/* and vector store in server/lib/vectorStore.js.')
-  lines.push('- Web search: Tavily (env: TAVILY_API_KEY) in server/services/webSearch.js; used when retrieval is weak or the question needs fresh web facts—not for every request.')
-  lines.push(
-    '- Chat length / retrieval (env): MAX_COMPLETION_TOKENS (default 256), MAX_COMPLETION_TOKENS_WITH_RAG (default 384, when indexed passages are retrieved), MAX_COMPLETION_TOKENS_DETAIL (default 2048), RAG_TOP_K (default 3), RAG_TOP_K_DETAIL (default 12), RAG_MIN_SCORE_DETAIL (default 0.18, detail questions only). Detail mode triggers on phrases like "technical", "architecture", "in depth", "explain how", stack/compare/design options.',
-  )
-  lines.push(
-    '- GitHub for RAG: `npm run build-knowledge` — optional full tree (`GITHUB_FULL_TREE=true`, server/lib/githubFullTreeIndex.js) or partial paths + server/knowledge/github-extra-paths.json. `npm run verify-github` checks raw URLs. Env: GITHUB_TOKEN recommended, GITHUB_FETCH_REPO=false skips all GitHub fetches.',
-  )
-  lines.push(
-    '- Owner / interview mode: optional `PORTFOLIO_OWNER_PREFIX` (e.g. `/owner`) — if the user message starts with that exact prefix, the server strips it for retrieval and uses a technical “office assistant” prompt (see chat route).',
-  )
-
-  return lines.join('\n')
-}
+import {
+  buildSiteImplementationNotes,
+  buildSystemPromptBase,
+  buildTechStackSummary,
+  DETAIL_MODE_PROMPT,
+  OWNER_MODE_PROMPT,
+} from './chatPrompts.js'
 
 /**
  * Shared OpenAI client, RAG config, and vector store for Express and Vercel serverless.
@@ -95,81 +26,14 @@ export function buildChatRuntime() {
     /** When RAG returns chunks but not detail mode, floor completion length so quotes + answer fit. */
     MAX_COMPLETION_TOKENS_WITH_RAG: parseInt(process.env.MAX_COMPLETION_TOKENS_WITH_RAG || '384', 10),
     MAX_COMPLETION_TOKENS_DETAIL: parseInt(process.env.MAX_COMPLETION_TOKENS_DETAIL || '2048', 10),
-    systemPromptBase: `You are a concise, friendly assistant for Jose Correa's portfolio website.
-
-Style rules:
-- Answer in 2–4 short sentences unless the user clearly asks for more detail.
-- If the user asks "who", include the requested names (when present in the provided context) and do not guess.
-- Do not repeat the user's question.
-- Avoid filler like "great question", "as an AI", apologies, or long intros.
-- Use simple, everyday language and get to the point quickly.
-- Write as if explaining to someone who has no engineering background. Avoid jargon; when a technical term is necessary, add a quick plain-English explanation in the same sentence (e.g. "it uses an embedding — basically a way of turning text into numbers so the computer can compare meanings").
-- Use short analogies or real-world comparisons when they make a concept clearer. Keep them brief — one sentence is enough.
-- Every answer should make sense to a curious non-engineer. If the topic is technical, simplify without dumbing it down.
-
-Knowledge rules:
-- Use the portfolio context to answer questions about Jose's projects, experience, and background. The context may include excerpts from public GitHub (README, configs, and—if enabled at build time—filtered source files from full-tree indexing), plus site copy and PDFs. Prefer technical details from those excerpts when answering in-depth questions.
-- Code and repos: the portfolio context holds **indexed excerpts only**, not a live GitHub browser. If the user asks for implementation that is not present in the passages, say so plainly; cite public repo URLs from the context when available—do not invent file paths or claim “no GitHub integration” when excerpts exist.
-- **Portfolio context (RAG):** The "## Portfolio context" section may label passages **[S1], [S2], …** only so you can tell chunks apart. Those tags are **internal—never include [Sn], (Sn), or similar in your reply.** Answer in normal conversational prose, like a typical chat assistant. Ground facts in the passages but paraphrase; do not paste long raw excerpts unless the user asks for a quote.
-- "Who did Jose work on?": interpret as "which projects/roles did Jose work on" and answer using the portfolio context (and any matching research PDF chunks in the retrieved context).
-- "Who did Jose work with?"/"who did he work with on ...?": interpret as collaborators/teammates/other people named in the research PDF or other indexed passages.
-  - For the Power Distribution Module / PDM: only list names that appear in the provided context; if you can't find collaborator names in the retrieved context, say you couldn't find them in the indexed sources and point to the Experience & Projects section (and the PDM research PDF in Projects). Do not infer names.
-  - For other projects/roles: only list names that appear in the provided context. If the retrieved context does not include any collaborator names for that project, respond with: "I don't see any collaborator names for that project in the indexed sources, so I'm treating it as Jose working alone (based on what's available)." Do not infer additional names.
-    - When applying this solo-work fallback, do not say "can't find names", do not say "check Experience & Projects", and do not suggest other sections.
-- Use the tech stack section below to answer "what stack is this site built with?" and "how did you build X on the site?" questions.
-- When asked how something works on the site, explain the approach at a high level and mention the relevant parts (frontend, backend API, RAG, web search) without claiming features that aren't in the context.
-- For asset-origin questions (e.g. “where did the 3D model come from?”): only answer with what is known from the implementation notes (file path, where it is loaded, whether it exists in the repo). Do not guess a source like Sketchfab/CAD unless that source is explicitly provided in the context.
-- When web search results are provided, use them for fresh or general web facts; for questions about this portfolio site’s stack, deployment, or repo layout, prefer the site implementation notes and portfolio context above—do not contradict them with generic web articles.
-- **Live / real-time facts (weather, sports scores, stock prices, breaking news):** Only state numbers, temperatures, or other factual details that appear verbatim in the **## Web search results** section. If that section is missing, empty, or the search failed, say live data could not be retrieved—do not invent or guess figures.
-- Questions like "how is this site deployed" or "where does the backend run" must be answered from the implementation notes (Vercel serverless api/chat.js vs optional Express) unless the portfolio context adds detail.
-- If you still do not know the answer, say you don't know instead of making something up.
-- Never tell the user that "no relevant context" was found; speak naturally and point to the site sections if knowledge is thin.
-
-Detail / technical mode (the app may append extra instructions when the user asks for depth):
-- When asked for technical depth, architecture, implementation, or a walkthrough, give a structured answer: short sections or bullet points are OK.
-- Stay grounded in the portfolio context and implementation notes; do not invent file paths, APIs, or metrics that are not supported by the context.
-- If the context names a public source code URL for a project, you may mention it; do not guess GitHub URLs.`,
+    systemPromptBase: buildSystemPromptBase({
+      techStackSummary,
+      implementationNotes,
+    }),
   }
 
-  config.systemPromptDetailMode = `
-## Response mode: technical depth
-The user asked for detailed / technical / architectural explanation.
-- Use multiple short paragraphs and/or bullet lists so the answer is easy to scan.
-- Prefer concrete terms from the portfolio context (stacks, subsystems, constraints, evaluation methods).
-- Do **not** show internal passage labels like [S1] or ([S2]) in the answer. Prefer clear paraphrase and concrete terms from the portfolio context; optional short quoted phrases are fine without any source tags.
-- If something is not in the context, say what is unknown rather than inventing internals.
-- If a public repository URL appears in the portfolio context for the relevant project, you may include it once at the end under a line like "Source:".
-`.trim()
-
-  config.systemPromptOwnerMode = `
-## Response mode: owner / interview prep (private)
-The site owner enabled this turn via a server-configured message prefix. This is not the public portfolio tone.
-
-**Response format — always two parts, in this order:**
-
-### Part 1 — The Script
-Write a flowing, spoken-word version of the answer. No bullet points or headers here — just natural sentences strung together as you'd actually say them out loud to an interviewer. Use contractions, vary sentence length, let it breathe. Phrases like "So basically...", "The way it works is...", "And then what happens is..." are exactly right. This should sound like you're walking someone through it in a hallway conversation, not reading from a doc.
-
-### Part 2 — The Breakdown
-After the script, add a horizontal rule (---) and then a clear structured breakdown. Use headers or numbered steps here. This is the textbook version: each step or component named and explained concisely. Bullets and short technical labels are fine in this section.
-
----
-
-Other rules:
-- You may address Jose as "you" when natural.
-- **Ignore** the usual "2–4 short sentences" rule: give enough depth to refresh memory or prep for interviews.
-- Ground every specific claim in the portfolio context. When the context includes code or file paths, you may show **short** markdown code fences with the actual lines; paraphrase the rest.
-- If the user asks for exact code/snippet/path, lead the Breakdown section with a **Snippet** block first.
-- If exact snippet evidence is missing from retrieved context, say this plainly: "I cannot show the exact snippet from retrieved context for this request." Then continue with what is known.
-- If a function, loop, or algorithm is not in the indexed excerpts, say so and name what *was* retrieved — do not fabricate source code and do not switch to generic tutorials.
-- Still do not invent live weather, scores, or news: those require the "## Web search results" section.
-- Do **not** show internal RAG labels like [S1] in the answer.
-`.trim()
-
-  config.systemPromptBase += `\n\nMath / formulas:\n- For equations, use LaTeX: inline $...$ or display $$...$$. The chat UI renders math with KaTeX.\n- Prefer one clear statement per formula; avoid repeating the same equation in multiple forms.\n`
-
-  config.systemPromptBase += `\n\n## Site tech stack (from package.json)\n${techStackSummary}\n`
-  config.systemPromptBase += `\n## Site implementation notes (from repo)\n${implementationNotes}\n`
+  config.systemPromptDetailMode = DETAIL_MODE_PROMPT
+  config.systemPromptOwnerMode = OWNER_MODE_PROMPT
 
   const store = createCachedFileVectorStore()
 

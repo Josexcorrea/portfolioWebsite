@@ -30,6 +30,8 @@ export const config = {
 }
 
 export default async function handler(req, res) {
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+
   if (req.method !== 'POST') {
     res.status(405).setHeader('Allow', 'POST').json({ error: 'Method not allowed' })
     return

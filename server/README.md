@@ -56,8 +56,16 @@ GitHub indexing and file filters are controlled by env vars listed in [`.env.exa
 - **Helmet** sets CSP and related headers in production; **`trust proxy`** is enabled in production for correct client IPs behind a reverse proxy.
 - **CORS:** In production, **`CORS_ORIGIN`** must be a comma-separated allowlist; if it is empty, `createServer` throws at startup (browser requests must send an allowed `Origin`).
 - **Body size:** JSON payloads are capped (see `express.json` limit in `createServer.js`).
-- **Rate limiting:** Express uses **`express-rate-limit`** with **`RATE_LIMIT_MAX`** (per minute per IP). On Vercel, [`lib/vercelRateLimit.js`](./lib/vercelRateLimit.js) uses Upstash when **`UPSTASH_REDIS_REST_URL`** and **`UPSTASH_REDIS_REST_TOKEN`** are set; otherwise requests are not throttled on the function.
+- **Rate limiting:** Express uses **`express-rate-limit`** with **`RATE_LIMIT_MAX`** (per minute per IP). On Vercel, [`lib/vercelRateLimit.js`](./lib/vercelRateLimit.js) uses Upstash when **`UPSTASH_REDIS_REST_URL`** and **`UPSTASH_REDIS_REST_TOKEN`** are set; if missing, it falls back to a best-effort in-memory limiter per function instance.
 - **Static assets in production:** When `dist/` exists, hashed assets are cached; `index.html` is not cached (see `createServer.js`).
+
+### Security checklist (ops)
+
+- Set `OPENAI_API_KEY` (required) and optional `TAVILY_API_KEY` only in server/runtime env.
+- On Vercel, set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` for centralized per-IP limits.
+- If owner mode is enabled, set `PORTFOLIO_OWNER_PREFIX` to a private value and do not expose it in UI copy.
+- Confirm production CORS allowlist (`CORS_ORIGIN`) for Express deployments.
+- Run `npm run check` and review CI/audit results before production deploys.
 
 ## Parent documentation
 

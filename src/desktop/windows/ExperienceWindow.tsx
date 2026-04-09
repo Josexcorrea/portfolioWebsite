@@ -1,16 +1,16 @@
-import { useState } from 'react'
 import { experiences } from '@/data'
 import { ExperienceView } from '@/components'
+import { SelectableWindowView } from './SelectableWindowView'
 
 export function ExperienceWindow() {
-  const [selectedExperienceId, setSelectedExperienceId] = useState(
-    () => experiences[0]?.id ?? '',
-  )
-
   return (
-    <ExperienceView
-      selectedExperienceId={selectedExperienceId}
-      onSelectExperience={setSelectedExperienceId}
-    />
+    <SelectableWindowView initialId={experiences[0]?.id ?? ''}>
+      {(selectedExperienceId, setSelectedExperienceId) => (
+        <ExperienceView
+          selectedExperienceId={selectedExperienceId}
+          onSelectExperience={setSelectedExperienceId}
+        />
+      )}
+    </SelectableWindowView>
   )
 }

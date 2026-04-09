@@ -194,6 +194,19 @@ function applyLayoutCssVars(metrics: LayoutMetrics) {
   r.style.setProperty('--mac-dock-reserved', `${metrics.dockReserved}px`)
 }
 
+function isMobileViewport(): boolean {
+  return window.matchMedia('(max-width: 767px)').matches
+}
+
+function mobileGeometry(m: LayoutMetrics): { position: WindowPosition; size: WindowSize } {
+  const top = m.menuBarBottom
+  const height = Math.max(240, window.innerHeight - m.menuBarBottom - m.dockReserved)
+  return {
+    position: { x: 0, y: top },
+    size: { w: window.innerWidth, h: height },
+  }
+}
+
 // ─── initial state ────────────────────────────────────────────────────────────
 
 function makeWindow(appId: AppId): WindowState {
@@ -582,6 +595,36 @@ function desktopReducer(state: DesktopState, action: DesktopAction): DesktopStat
       return changed ? { ...state, windows: newWindows } : state
     }
 
+    case 'FORCE_MOBILE_FIT': {
+      if (!isMobileViewport()) return state
+      const newWindows = { ...state.windows }
+      let changed = false
+      const geo = mobileGeometry(m)
+      for (const id of ALL_APP_IDS) {
+        const win = newWindows[id]
+        if (!win.isOpen || win.isMinimized) continue
+        const nextWin: WindowState = {
+          ...win,
+          isMaximized: true,
+          snapZone: 'top',
+          position: geo.position,
+          size: geo.size,
+        }
+        if (
+          win.isMaximized !== nextWin.isMaximized ||
+          win.snapZone !== nextWin.snapZone ||
+          win.position.x !== nextWin.position.x ||
+          win.position.y !== nextWin.position.y ||
+          win.size.w !== nextWin.size.w ||
+          win.size.h !== nextWin.size.h
+        ) {
+          changed = true
+          newWindows[id] = nextWin
+        }
+      }
+      return changed ? { ...state, windows: newWindows } : state
+    }
+
     default:
       return state
   }
@@ -647,6 +690,9 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
       applyLayoutCssVars(metrics)
       dispatch({ type: 'SET_LAYOUT_METRICS', metrics })
       dispatch({ type: 'CLAMP_ALL' })
+      if (isMobileViewport()) {
+        dispatch({ type: 'FORCE_MOBILE_FIT' })
+      }
     }
     update()
     const mb = document.querySelector('.mac-menubar')
@@ -673,8 +719,8 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
       ? win.position
       : clampPosition(centeredPosition(size, metrics), size, metrics)
     dispatch({ type: 'OPEN', appId, position, size })
-    if (!win.isOpen && !win.isMaximized && window.innerWidth < 768) {
-      dispatch({ type: 'TOGGLE_MAXIMIZE', appId })
+    if (isMobileViewport()) {
+      dispatch({ type: 'FORCE_MOBILE_FIT' })
     }
   }, [state.windows, state.layoutMetrics])
 

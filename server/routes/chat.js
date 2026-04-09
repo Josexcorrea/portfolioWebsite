@@ -6,126 +6,132 @@ import { searchWeb } from '../services/webSearch.js'
 import { generateBlocks, shouldGenerateExampleBlocks } from '../services/blocks.js'
 import { sanitizeMessages } from '../services/sanitizeMessages.js'
 import { createStreamMathFormatter } from '../lib/streamMathFormatter.js'
+import {
+  buildOwnerContractInstruction,
+  hasStrongCodeEvidence,
+  isDetailTechnicalQuestion,
+  looksLikeFreshnessOrGeneralWebQuery,
+  looksLikePortfolioScopedQuestion,
+  looksLikeRiskOrSecurityQuestion,
+  looksLikeSnippetRequest,
+  looksLikeThisPortfolioMetaQuestion,
+  shouldRunWebSearch,
+} from '../lib/chatPolicies.js'
 
-/** User wants depth: more RAG chunks + higher max_tokens (see createServer config). */
-function isDetailTechnicalQuestion(qLower) {
-  const patterns = [
-    /\bin[- ]depth\b/,
-    /\bdeep dive\b/,
-    /\bmore detail\b/,
-    /\bdetailed (answer|explanation|overview)\b/,
-    /\btechnical (details|detail|explanation|overview|question)\b/,
-    /\barchitecture\b/,
-    /\bimplementation\b/,
-    /\belaborate\b/,
-    /\bwalk ?through\b/,
-    /\bstep[- ]by[- ]step\b/,
-    /\bexplain (how|why)\b/,
-    /\bhow does (the )?.+\b(work|function)\b/,
-    /\bthoroughly\b/,
-    /\bcomprehensive\b/,
-    /\bdesign (details|choices|decisions)\b/,
-    /\b(what|which) design\b/,
-    /\b(option|options)\s+(one|two|1|2|three|3)\b/,
-    /\btrade[- ]?offs?\b/,
-    /\bwhy (choose|did|pick)\b/,
-    /\bconstraint(s)?\b/,
-    /\brequirement(s)?\b/,
-    /\bcompare\b|\bversus\b|\bvs\.?\b/,
-    /\b(the )?stack\b/,
-    /\blow[- ]level\b/,
-    /\bgo (into|in) detail\b/,
-    /\b(deploy|deployment|deployed|hosted|hosting|production|vercel|serverless|ci\/cd)\b/,
-    /\bhow (was|is|were)\b.+\b(backend|api|server)\b/,
-    /\bfsae\b|\bformula sae\b/,
-    /\bpdm\b|\bpower distribution\b/,
-    /\becu\b|\bcan bus\b|\btelemetry\b/,
-  ]
-  return patterns.some((p) => p.test(qLower))
+function safeClientError(status) {
+  if (status === 400) return 'Invalid chat request.'
+  if (status === 401 || status === 403) return 'Request is not authorized.'
+  if (status === 404) return 'Requested resource was not found.'
+  if (status === 408) return 'Request timed out. Please try again.'
+  if (status === 429) return 'Too many requests. Try again in a minute.'
+  return 'Failed to get response. Try again later.'
 }
 
-/** Real-time or general-web questions where Tavily helps; portfolio-meta questions skip web to avoid noise. */
-function looksLikeFreshnessOrGeneralWebQuery(qLower) {
-  return /\b(weather|forecast|temperature|humidity|stock price|exchange rate|news today|breaking news|score (of|for) the|who won|nba |nfl )\b/i.test(
-    qLower,
+function buildSnippetEvidence(chunks, qLower) {
+  if (!Array.isArray(chunks) || chunks.length === 0) return ''
+  const q = String(qLower || '').toLowerCase()
+  const terms = Array.from(
+    new Set(
+      q
+        .split(/[^a-z0-9+]+/g)
+        .filter((t) => t.length >= 3),
+    ),
   )
-}
 
-function looksLikeThisPortfolioMetaQuestion(qLower) {
-  return (
-    /\b(this portfolio|portfolio website|this site|this website|your site|jose'?s (site|portfolio)|the site'?s)\b/.test(
-      qLower,
-    ) &&
-    /\b(deploy|deployment|deployed|hosted|hosting|backend|vercel|api\/chat|\/api\/chat|rag|how (does|is|was).+ built)\b/.test(
-      qLower,
-    )
-  )
-}
-
-/**
- * @param {{ maxScore: number, chunksLen: number }} rag
- */
-function shouldRunWebSearch(lastQuestion, rag) {
-  if (!process.env.TAVILY_API_KEY) return false
-  const qLower = lastQuestion.toLowerCase()
-  if (looksLikeFreshnessOrGeneralWebQuery(qLower)) return true
-  if (looksLikeThisPortfolioMetaQuestion(qLower)) return false
-  const strongPortfolioMatch = rag.chunksLen >= 1 && rag.maxScore >= 0.33
-  if (strongPortfolioMatch) return false
-  return true
-}
-
-function looksLikeSnippetRequest(qLower) {
-  return (
-    /\b(code|snippet|file|path|implementation|source|show me|exact)\b/.test(qLower) ||
-    /\bwhere\b.+\b(in|inside)\b/.test(qLower)
-  )
-}
-
-function looksLikeRiskOrSecurityQuestion(qLower) {
-  return /\b(what breaks|if skipped|security|signature|verify|validation|webhook|auth|token)\b/.test(qLower)
-}
-
-function hasStrongCodeEvidence(chunks) {
-  if (!chunks || chunks.length === 0) return false
-  const text = chunks.map((c) => `${c.documentTitle}\n${c.chunkText}`).join('\n')
-  return (
-    /```/.test(text) ||
-    /\b(src|server|api|lib|routes|components)\/[^\s)]+/.test(text) ||
-    /\b(function|const|let|class|export|import)\b/.test(text)
-  )
-}
-
-function buildOwnerContractInstruction({
-  snippetRequested,
-  securityStyleQuestion,
-  codeEvidenceStrong,
-}) {
-  const lines = [
-    '## Owner-mode response contract (enforced)',
-    '- Use this structure in order:',
-    '  1) **Snippet**',
-    '  2) **Why it matters**',
-  ]
-  if (securityStyleQuestion) {
-    lines.push('  3) **What breaks if skipped**')
+  function extractFilePath(raw) {
+    const m = String(raw || '').match(/\bFile:\s*([^\n]+)/i)
+    return m ? m[1].trim() : null
   }
 
-  if (snippetRequested && !codeEvidenceStrong) {
-    lines.push(
-      '- For **Snippet** when context is insufficient, output exactly this sentence (then continue the remaining sections):',
-      '  "I cannot show the exact snippet from retrieved context for this request."',
-      '- After that sentence, name what evidence is available from retrieved context (paths/titles only if present).',
-      '- Do not switch to generic tutorial mode.',
-    )
-  } else if (snippetRequested && codeEvidenceStrong) {
-    lines.push(
-      '- For **Snippet**, provide a short concrete snippet grounded in retrieved context (no invented paths/functions).',
-    )
+  function extractRelevantSnippet(raw) {
+    const text = String(raw || '')
+    if (!text) return ''
+    const exportIdx = text.search(/\bexport function\b/i)
+    if (exportIdx >= 0) {
+      const start = Math.max(0, exportIdx - 200)
+      const end = Math.min(text.length, exportIdx + 700)
+      return text.slice(start, end).trim()
+    }
+    const hookIdx = text.search(/\buse[A-Z][A-Za-z0-9_]*\s*\(/)
+    if (hookIdx >= 0) {
+      const start = Math.max(0, hookIdx - 180)
+      const end = Math.min(text.length, hookIdx + 680)
+      return text.slice(start, end).trim()
+    }
+    return text.slice(0, 900).trim()
   }
 
-  lines.push('- Never show internal RAG labels like [S1].')
-  return lines.join('\n')
+  const scored = chunks
+    .map((c) => {
+      const title = String(c.documentTitle || '')
+      const body = String(c.chunkText || '')
+      const bag = `${title}\n${body}`.toLowerCase()
+      const filePath = extractFilePath(body) || title
+      let score = 0
+      if (bag.includes('sports-card')) score += 6
+      if (bag.includes('calculations.py') || bag.includes('calculations.ts')) score += 4
+      if (bag.includes('ev') || bag.includes('expected value')) score += 3
+      if (q.includes('shelfos') && bag.includes('shelfos')) score += 8
+      if (q.includes('hook') && /\/hooks\/|hooks?/.test(bag)) score += 10
+      if (/export function/.test(bag)) score += 10
+      if (/package\.json|readme\.md/.test(bag)) score -= 8
+      for (const t of terms) {
+        if (bag.includes(t)) score += 1
+      }
+      return { c, score, filePath, snippet: extractRelevantSnippet(body) }
+    })
+    .filter((x) => x.score > -3 && x.snippet)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
+
+  const lines = []
+  for (let i = 0; i < scored.length; i++) {
+    const { c, filePath, snippet } = scored[i]
+    lines.push(
+      `### Evidence ${i + 1}\nTitle: ${c.documentTitle}\nFileHint: ${filePath}\nSnippet:\n\`\`\`\n${snippet}\n\`\`\``,
+    )
+  }
+  return lines.join('\n\n')
+}
+
+function firstSnippetFromEvidence(snippetEvidence) {
+  const text = String(snippetEvidence || '')
+  const fileMatch = text.match(/FileHint:\s*([^\n]+)/)
+  const codeMatch = text.match(/```([\s\S]*?)```/)
+  if (!fileMatch || !codeMatch) return null
+  const file = fileMatch[1].trim()
+  const code = codeMatch[1].trim()
+  if (!file || !code) return null
+  return { file, code }
+}
+
+function ownerSnippetFallbackAnswer(snippetEvidence) {
+  const picked = firstSnippetFromEvidence(snippetEvidence)
+  if (!picked) return null
+  return `Client-ready script
+I pulled the exact implementation from your indexed repo context, so let’s use the real function instead of a generic example. This snippet is the core piece to discuss in interviews because it shows the actual data/query flow in your project.
+
+---
+
+## Cheat sheet
+### Snippet
+File: \`${picked.file}\`
+\`\`\`
+${picked.code}
+\`\`\`
+
+### What it does
+This function/hook wraps one focused behavior and returns the value your UI uses.
+
+### Line-by-line breakdown
+- Import lines: bring in required query/API utilities and types.
+- \`export function ...\`: defines the reusable function/hook entry point.
+- Return block: executes the query/call and provides configured behavior.
+- Query key/endpoint/options lines: control cache identity, request target, and freshness/behavior.
+
+### Why it matters
+This is the operational source of truth for that feature, so using this exact snippet keeps answers grounded and useful for debugging.
+`
 }
 
 /**
@@ -160,7 +166,7 @@ export async function executeChatPost(req, res, { openai, config, store }) {
   const { ownerMode, questionForRag } = parseOwnerPrefix(lastQuestion)
   if (ownerMode && !questionForRag.trim()) {
     return res.status(400).json({
-      error: 'Add your question after the owner prefix (set PORTFOLIO_OWNER_PREFIX in server env).',
+      error: 'Add your question after the owner prefix.',
     })
   }
 
@@ -175,6 +181,7 @@ export async function executeChatPost(req, res, { openai, config, store }) {
       qLower.includes('pdm')
 
     const wantsDetail = isDetailTechnicalQuestion(qLower)
+    const snippetRequested = looksLikeSnippetRequest(qLower)
 
     let ragTopK = config.RAG_TOP_K
     if (isWhoOrCollabQuestion) ragTopK = Math.max(ragTopK, 5)
@@ -194,13 +201,30 @@ export async function executeChatPost(req, res, { openai, config, store }) {
       ragMinScore = Math.min(ragMinScore, 0.12)
     }
 
-    const { chunks, context, maxScore } = await getRagContext({
+    let { chunks, context, maxScore } = await getRagContext({
       question: questionForRag,
       openai,
       store,
       topK: ragTopK,
       minScore: ragMinScore,
     })
+
+    // Owner snippet requests get a second retrieval pass when first-pass
+    // evidence does not look code-grounded enough.
+    if (ownerMode && snippetRequested && !hasStrongCodeEvidence(chunks)) {
+      const secondPass = await getRagContext({
+        question: `${questionForRag}\nshow source code implementation file path export function`,
+        openai,
+        store,
+        topK: Math.min(28, ragTopK + 8),
+        minScore: Math.min(ragMinScore, 0.08),
+      })
+      if (hasStrongCodeEvidence(secondPass.chunks) || secondPass.maxScore > maxScore) {
+        chunks = secondPass.chunks
+        context = secondPass.context
+        maxScore = secondPass.maxScore
+      }
+    }
 
     // Deterministic "solo fallback" for non-PDM collaborator questions:
     // if the retrieved context doesn't appear to contain any "worked with/collaborated with <Name>" pattern,
@@ -287,10 +311,15 @@ export async function executeChatPost(req, res, { openai, config, store }) {
         .map((r) => `Title: ${r.title}\nURL: ${r.url}\nSummary: ${r.snippet}`)
         .join('\n\n---\n\n')
     }
+    const webSearchUnavailable =
+      !process.env.TAVILY_API_KEY &&
+      !looksLikeThisPortfolioMetaQuestion(qLower) &&
+      (looksLikeFreshnessOrGeneralWebQuery(qLower) || !looksLikePortfolioScopedQuestion(qLower))
+    const webNoResults = webWanted && (!webResults || webResults.length === 0)
 
-    const snippetRequested = looksLikeSnippetRequest(qLower)
     const securityStyleQuestion = looksLikeRiskOrSecurityQuestion(qLower)
     const codeEvidenceStrong = hasStrongCodeEvidence(chunks)
+    const snippetEvidence = snippetRequested && codeEvidenceStrong ? buildSnippetEvidence(chunks, qLower) : ''
 
     let systemContent = config.systemPromptBase
     if (wantsDetail && config.systemPromptDetailMode) {
@@ -303,8 +332,20 @@ export async function executeChatPost(req, res, { openai, config, store }) {
         securityStyleQuestion,
         codeEvidenceStrong,
       })}`
+      if (snippetRequested && codeEvidenceStrong) {
+        systemContent += `\n\n## Required output shape for this turn\n- In Part 2 (Cheat sheet), start with **Snippet**.\n- Under **Snippet**, include:\n  - File: <best-matching path/title>\n  - A fenced code block copied from retrieved evidence.\n- Immediately after snippet, include **Line-by-line breakdown**:\n  - explain what each shown line or logical code block does,\n  - explain why each part matters for behavior.\n- Keep Part 1 script short and non-repetitive; put deep technical detail in Part 2.\n`
+      }
+      if (snippetRequested && !codeEvidenceStrong) {
+        systemContent += `\n\n## Required output shape for missing exact code\n- Say exactly: "I cannot show the exact snippet from retrieved context for this request."\n- Then list nearest retrieved file/path evidence.\n- Do not invent code or pseudocode.\n`
+      }
+      if (snippetEvidence) {
+        systemContent += `\n\n## Retrieved code evidence\nUse these excerpts for the Snippet section. Quote short portions faithfully and mention file titles.\n\n${snippetEvidence}`
+      }
     }
     if (webContext) systemContent += `\n\n## Web search results\n${webContext}`
+    if (webSearchUnavailable || webNoResults) {
+      systemContent += `\n\n## Web fallback status\nNo usable web research results are available for this turn. Do a best-effort answer from portfolio context and general knowledge, clearly separate known facts from assumptions, and keep the explanation practical for non-engineers.`
+    }
     systemContent += `\n\n## Portfolio context\n${context}`
 
     const messagesForModel =
@@ -360,7 +401,18 @@ export async function executeChatPost(req, res, { openai, config, store }) {
     const tail = formatter.flush()
     if (tail) writeNdjson(res, { type: 'delta', content: tail })
 
-    if (shouldGenerateExampleBlocks(questionForRag)) {
+    if (ownerMode && snippetRequested && codeEvidenceStrong && !/```/.test(fullAnswer)) {
+      const fallback = ownerSnippetFallbackAnswer(snippetEvidence)
+      if (fallback) {
+        writeNdjson(res, { type: 'delta', content: '\n\n' + fallback })
+      }
+    }
+
+    const allowBlocks =
+      shouldGenerateExampleBlocks(questionForRag) &&
+      !(ownerMode && snippetRequested)
+
+    if (allowBlocks) {
       const blocks = await generateBlocks({
         question: questionForRag,
         answer: fullAnswer,
@@ -385,7 +437,6 @@ export async function executeChatPost(req, res, { openai, config, store }) {
         webSearch: Boolean(webResults?.length),
         detailMode: wantsDetail,
         ownerMode,
-        ownerQuestionAfterPrefix: ownerMode ? questionForRag : null,
         ownerSnippetRequested: ownerMode ? snippetRequested : false,
         ownerCodeEvidenceStrong: ownerMode ? codeEvidenceStrong : false,
         maxTokens,
@@ -395,7 +446,7 @@ export async function executeChatPost(req, res, { openai, config, store }) {
     console.error('Chat error:', requestId, err)
     if (!res.headersSent) {
       const status = err?.status || 500
-      const message = status === 500 ? 'Failed to get response. Try again later.' : err?.message
+      const message = safeClientError(status)
       res.status(status).json({ error: message })
     } else {
       writeNdjson(res, { type: 'error', error: 'Stream error' })

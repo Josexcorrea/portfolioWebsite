@@ -8,6 +8,7 @@ type State = {
   loading: boolean
   error: string | null
   activeAssistantId: string | null
+  ownerModeLatched: boolean
 }
 
 type Action =
@@ -16,6 +17,8 @@ type Action =
   | { type: 'blocks'; payload: { assistantId: string; blocks: ChatBlock[] } }
   | { type: 'done'; payload: { assistantId: string } }
   | { type: 'error'; payload: { assistantId: string; error: string } }
+  | { type: 'push_local'; payload: { messages: ChatMessage[] } }
+  | { type: 'set_owner_mode'; payload: { enabled: boolean } }
   | { type: 'reset_error' }
   | { type: 'set_loading'; payload: { loading: boolean } }
 
@@ -24,6 +27,7 @@ const initialState: State = {
   loading: false,
   error: null,
   activeAssistantId: null,
+  ownerModeLatched: false,
 }
 
 function updateMessageById(messages: ChatMessage[], id: string, updater: (m: ChatMessage) => ChatMessage) {
@@ -41,6 +45,17 @@ function reducer(state: State, action: Action): State {
 
     case 'set_loading':
       return { ...state, loading: action.payload.loading }
+
+    case 'set_owner_mode':
+      return { ...state, ownerModeLatched: action.payload.enabled }
+
+    case 'push_local':
+      return {
+        ...state,
+        loading: false,
+        activeAssistantId: null,
+        messages: [...state.messages, ...action.payload.messages],
+      }
 
     case 'send_start': {
       const { user, assistant } = action.payload
@@ -113,6 +128,7 @@ type UseChatControllerResult = {
   messages: ChatMessage[]
   loading: boolean
   error: string | null
+  ownerModeLatched: boolean
   hasMessages: boolean
   showSuggestions: boolean
   sendUserText: (text: string) => Promise<void>
@@ -149,6 +165,35 @@ export function useChatController(): UseChatControllerResult {
     async (text: string) => {
       const trimmed = text.trim()
       if (!trimmed || state.loading) return
+      const ownerPrefix = '/owner03'
+      const exitOwnerCommand = '/exit'
+      const legacyExitOwnerCommand = '/exitowner03'
+
+      if (trimmed.toLowerCase() === ownerPrefix) {
+        const userMessage: ChatMessage = {
+          id: makeId('user'),
+          role: 'user',
+          content: trimmed,
+          createdAt: Date.now(),
+          status: 'done',
+        }
+        dispatch({ type: 'set_owner_mode', payload: { enabled: true } })
+        dispatch({ type: 'push_local', payload: { messages: [userMessage] } })
+        return
+      }
+
+      if (trimmed.toLowerCase() === exitOwnerCommand || trimmed.toLowerCase() === legacyExitOwnerCommand) {
+        const userMessage: ChatMessage = {
+          id: makeId('user'),
+          role: 'user',
+          content: trimmed,
+          createdAt: Date.now(),
+          status: 'done',
+        }
+        dispatch({ type: 'set_owner_mode', payload: { enabled: false } })
+        dispatch({ type: 'push_local', payload: { messages: [userMessage] } })
+        return
+      }
 
       // Cancel any in-flight stream (e.g., user re-sends quickly, or UI toggles).
       abortRef.current?.abort()
@@ -157,6 +202,11 @@ export function useChatController(): UseChatControllerResult {
 
       dispatch({ type: 'reset_error' })
       dispatch({ type: 'set_loading', payload: { loading: true } })
+
+      const outgoingText =
+        state.ownerModeLatched && !trimmed.toLowerCase().startsWith(ownerPrefix)
+          ? `${ownerPrefix} ${trimmed}`
+          : trimmed
 
       const userMessage: ChatMessage = {
         id: makeId('user'),
@@ -180,7 +230,7 @@ export function useChatController(): UseChatControllerResult {
 
       const requestMessages = [...state.messages, userMessage, assistantPlaceholder].map((m) => ({
         role: m.role,
-        content: m.content,
+        content: m.id === userMessage.id ? outgoingText : m.content,
       }))
 
       await sendChatStream(
@@ -214,7 +264,7 @@ export function useChatController(): UseChatControllerResult {
         { signal: abortController.signal }
       )
     },
-    [state.loading, state.messages]
+    [state.loading, state.messages, state.ownerModeLatched]
   )
 
   return useMemo(
@@ -222,13 +272,14 @@ export function useChatController(): UseChatControllerResult {
       messages: state.messages,
       loading: state.loading,
       error: state.error,
+      ownerModeLatched: state.ownerModeLatched,
       hasMessages,
       showSuggestions,
       sendUserText,
       stopStream,
       resetError,
     }),
-    [hasMessages, resetError, sendUserText, stopStream, showSuggestions, state.error, state.loading, state.messages]
+    [hasMessages, resetError, sendUserText, stopStream, showSuggestions, state.error, state.loading, state.messages, state.ownerModeLatched]
   )
 }
 

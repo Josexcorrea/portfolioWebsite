@@ -1,16 +1,16 @@
-import { useState } from 'react'
 import { projects } from '@/data'
 import { ProjectsView } from '@/components'
+import { SelectableWindowView } from './SelectableWindowView'
 
 export function ProjectsWindow() {
-  const [selectedProjectId, setSelectedProjectId] = useState(
-    () => projects[0]?.id ?? '',
-  )
-
   return (
-    <ProjectsView
-      selectedProjectId={selectedProjectId}
-      onSelectProject={setSelectedProjectId}
-    />
+    <SelectableWindowView initialId={projects[0]?.id ?? ''}>
+      {(selectedProjectId, setSelectedProjectId) => (
+        <ProjectsView
+          selectedProjectId={selectedProjectId}
+          onSelectProject={setSelectedProjectId}
+        />
+      )}
+    </SelectableWindowView>
   )
 }

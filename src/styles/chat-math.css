@@ -1,0 +1,46 @@
+/* KaTeX in assistant messages (dark panel) */
+.chat-markdown .katex {
+  font-size: 1.08em;
+  color: rgba(249, 245, 255, 0.96);
+}
+
+.chat-markdown .katex-display {
+  margin: 0.85rem 0;
+  padding: 0.65rem 0.75rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(167, 139, 250, 0.15);
+  border-radius: 0.65rem;
+}
+
+.chat-markdown .katex-display > .katex {
+  color: rgba(249, 245, 255, 0.98);
+}
+
+.chat-markdown .katex .mrel,
+.chat-markdown .katex .mbin {
+  color: rgba(249, 245, 255, 0.95);
+}
+
+/* KaTeX readable on gray assistant bubble */
+.chat-imsg-bubble--assistant .chat-markdown .katex {
+  color: #1c1c1e;
+}
+
+.chat-imsg-bubble--assistant .chat-markdown .katex-display {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.chat-imsg-bubble--assistant .chat-markdown .katex-display > .katex {
+  color: #1c1c1e;
+}
+
+.chat-imsg-bubble--assistant .chat-markdown .katex .mrel,
+.chat-imsg-bubble--assistant .chat-markdown .katex .mbin {
+  color: #1c1c1e;
+}
+
