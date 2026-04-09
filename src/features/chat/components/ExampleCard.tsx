@@ -17,16 +17,16 @@ function safeExternalHref(raw: string): string | null {
 
 export function ExampleCard({ block }: { block: ExampleCardBlock }) {
   return (
-    <div className="mt-2 rounded-xl border border-accent/25 bg-[linear-gradient(145deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-3 shadow-[0_0_0_1px_rgba(168,85,247,0.08)]">
+    <div className="mt-2 rounded border border-white/[0.08] bg-white/[0.03] p-3">
       {(block.title || block.summary) && (
         <div className="mb-2">
-          {block.title && <div className="text-[0.82rem] font-semibold text-white">{block.title}</div>}
-          {block.summary && <div className="mt-0.5 text-[0.78rem] text-text-muted leading-snug">{block.summary}</div>}
+          {block.title && <div className="text-[0.8rem] font-medium text-white/80">{block.title}</div>}
+          {block.summary && <div className="mt-0.5 text-[0.75rem] text-white/45 leading-snug">{block.summary}</div>}
         </div>
       )}
 
       {block.steps && block.steps.length > 0 && (
-        <ol className="list-decimal list-outside pl-5 space-y-1 text-[0.85rem] text-white/95">
+        <ol className="list-decimal list-outside pl-5 space-y-1 text-[0.82rem] text-white/75">
           {block.steps.map((s, i) => (
             <li key={i} className="leading-relaxed">
               {s}
@@ -36,19 +36,19 @@ export function ExampleCard({ block }: { block: ExampleCardBlock }) {
       )}
 
       {block.code?.text && (
-        <div className="mt-2 rounded-lg border border-border/80 bg-black/30 overflow-hidden">
-          <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-border/70 bg-black/20">
-            <span className="text-[0.72rem] text-text-muted">{block.code.language || 'code'}</span>
+        <div className="mt-2 rounded border border-white/[0.07] bg-black/40 overflow-hidden">
+          <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-white/[0.06] bg-black/20">
+            <span className="text-[0.68rem] text-white/35 font-mono">{block.code.language || 'code'}</span>
             <button
               type="button"
               onClick={() => copyToClipboard(block.code?.text || '')}
-              className="text-[0.72rem] text-text-muted hover:text-white px-2 py-0.5 rounded-md hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="text-[0.68rem] text-white/35 hover:text-white/70 px-2 py-0.5 rounded hover:bg-white/[0.06] focus:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 transition-colors"
             >
-              Copy
+              copy
             </button>
           </div>
-          <pre className="p-2.5 text-[0.8rem] leading-relaxed overflow-auto scrollbar-glass">
-            <code className="text-white/95">{block.code.text}</code>
+          <pre className="p-2.5 text-[0.78rem] leading-relaxed overflow-auto scrollbar-glass">
+            <code className="text-white/75 font-mono">{block.code.text}</code>
           </pre>
         </div>
       )}
@@ -64,7 +64,7 @@ export function ExampleCard({ block }: { block: ExampleCardBlock }) {
                 href={href}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-border/80 bg-white/[0.06] px-2.5 py-1 text-[0.75rem] text-white hover:bg-white/10"
+                className="inline-flex items-center gap-1.5 rounded border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[0.72rem] text-white/60 hover:bg-white/[0.08] hover:text-white/80 transition-colors"
               >
                 <span className="truncate max-w-[240px]">{l.label}</span>
                 <span aria-hidden className="text-white/70">

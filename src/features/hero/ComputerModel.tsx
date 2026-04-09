@@ -20,10 +20,10 @@ export function ComputerModel(props: ModelProps) {
     // Recenter the model around origin (0,0,0)
     root.current.position.sub(center)
 
-    // Normalized size in scene units; slightly smaller than 6 so the hero reads less zoomed on wide layouts.
+    // Normalized size in scene units.
     const maxDim = Math.max(size.x, size.y, size.z)
     if (maxDim > 0) {
-      const target = 4.75
+      const target = 3.0
       const s = target / maxDim
       root.current.scale.setScalar(s)
     }

@@ -120,8 +120,6 @@ export function SkillBadges({
   ariaLabel = 'Skills and technologies',
   glareHover = false,
 }: SkillBadgesProps) {
-  const [hoveredSlug, setHoveredSlug] = useState<string | null>(null)
-
   const badgeContent = (slug: string) => {
     const label = badgeLabel(slug)
     return (
@@ -145,17 +143,13 @@ export function SkillBadges({
               borderRadius="10px"
               background="var(--color-surface)"
               borderColor="var(--color-border)"
-              glareColor="#ffffff"
-              glareOpacity={0.45}
+              glareColor="#9090b8"
+              glareOpacity={0.65}
               glareSize={200}
               transitionDuration={550}
               className="group rounded-[10px] transition-all duration-200 hover:border-accent hover:scale-[1.08]"
               style={{ borderWidth: '1px' }}
               title={label}
-              hovered={hoveredSlug === slug}
-              onHoverChange={(active) => {
-                setHoveredSlug(active ? slug : null)
-              }}
             >
               {badgeContent(slug)}
             </GlareHover>

@@ -1,6 +1,6 @@
 /**
- * Portfolio chat: floating widget, embeddable chat UI, streaming API client.
+ * Portfolio chat: streaming client, message UI, and controller used by ChatWindow.
  */
-export { PortfolioChat } from './PortfolioChat'
-export { FloatingChatWidget } from './FloatingChatWidget'
+export { MessageBubble } from './components/MessageBubble'
+export { useChatController } from './state/useChatController'
 export type { ChatMessage, ChatBlock, ChatStreamEvent } from './types'

@@ -4,9 +4,11 @@ import { AssistantRenderer } from './AssistantRenderer'
 export function MessageBubble({
   message,
   isTyping,
+  lightMode = false,
 }: {
   message: ChatMessage
   isTyping?: boolean
+  lightMode?: boolean
 }) {
   const isUser = message.role === 'user'
 
@@ -14,8 +16,14 @@ export function MessageBubble({
     <div className={isUser ? 'flex justify-end' : 'flex justify-start'}>
       <div
         className={
-          'max-w-[92%] rounded-xl px-3.5 py-2.5 text-[0.9rem] border ' +
-          (isUser ? 'bg-accent/15 text-text-pri border-accent/25' : 'bg-white/[0.06] text-white border-border/80')
+          'max-w-[92%] text-[0.875rem] leading-relaxed ' +
+          (isUser
+            ? lightMode
+              ? 'pl-3 pr-3 py-1.5 border-l-2 border-accent/50 bg-black/[0.05] text-[#1d1d1f]'
+              : 'pl-3 pr-3 py-1.5 border-l-2 border-accent/60 bg-white/[0.03] text-text-pri'
+            : lightMode
+              ? 'py-1 text-[#1d1d1f]'
+              : 'py-1 text-white/85')
         }
       >
         {isUser ? (

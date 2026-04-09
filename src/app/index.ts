@@ -1,2 +1,2 @@
-/** App shell. Section config: `@/app/sections`. */
+/** App shell — mounts the desktop experience. */
 export { default as App } from './App'

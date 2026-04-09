@@ -45,7 +45,7 @@ export const experiences: ExperienceEntry[] = [
       'The same class of bugs repeats—off-by-one, bad assumptions about complexity, missing error handling—until rubrics call them out.',
       'Good feedback to model teams is structured, reproducible, and tied to specific failing tests.',
     ],
-    badges: ['python', 'c', 'cplusplus', 'java', 'typescript', 'linux'],
+    badges: ['python', 'c', 'cplusplus', 'java', 'typescript'],
   },
   {
     id: 'fiu',

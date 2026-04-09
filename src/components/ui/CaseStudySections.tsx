@@ -1,9 +1,9 @@
 import { SkillBadges } from './SkillBadges'
 
 const sectionLabelClass =
-  'font-display text-[0.7rem] font-bold uppercase tracking-widest text-text-soft mb-2'
+  'font-display text-[0.7rem] font-bold uppercase tracking-widest text-accent-soft mb-2'
 
-const bodyTextClass = 'text-[1.05rem] md:text-[1.1rem] text-white leading-relaxed break-words'
+const bodyTextClass = 'text-[1.05rem] md:text-[1.1rem] text-text-main leading-relaxed break-words'
 
 type ImpactListProps = {
   idPrefix: string

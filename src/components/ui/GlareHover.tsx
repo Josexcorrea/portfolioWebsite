@@ -91,7 +91,7 @@ const GlareHover: React.FC<GlareHoverProps> = ({
         hsla(0,0%,0%,0) 60%,
         ${rgba} 70%,
         hsla(0,0%,0%,0) 100%)`,
-    backgroundSize: `${glareSize}% ${glareSize}%, 100% 100%`,
+    backgroundSize: `${glareSize}% ${glareSize}%`,
     backgroundRepeat: 'no-repeat',
     backgroundPosition: glareActive ? positionEnd : positionStart,
     opacity: glareActive ? 1 : 0,
@@ -114,7 +114,7 @@ const GlareHover: React.FC<GlareHoverProps> = ({
       onMouseLeave={onLeave}
       title={title}
     >
-      <div style={overlayStyle} />
+      <div className="glare-hover-overlay" style={overlayStyle} />
       {children}
     </div>
   )

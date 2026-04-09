@@ -1,11 +1,6 @@
 /**
- * Shared types for the portfolio app.
- * View aligns with section ids from @/app/sections (single source of truth).
+ * Shared types for the portfolio app (content models and skills graph).
  */
-import type { SectionId } from '@/app/sections'
-
-export type View = SectionId
-
 export type Project = {
   id: string
   name: string
@@ -51,16 +46,6 @@ export type ExperienceEntry = {
   system?: string
   /** Simple Icons slugs for skill/tech badges shown under the description (same style as project badges). */
   badges?: string[]
-}
-
-export type ContactItem = {
-  id: string
-  label: string
-  href: string
-  /** Text fallback when emblem is not set (e.g. 'GH', 'IN'). */
-  icon: string
-  /** When set, show this emblem/logo instead of icon text. */
-  emblem?: 'phone' | 'github' | 'linkedin' | 'email' | 'resume' | 'instagram'
 }
 
 export type SkillProficiency = 'advanced' | 'intermediate' | 'familiar'
