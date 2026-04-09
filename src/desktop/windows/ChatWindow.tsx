@@ -1,12 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MessageBubble, useChatController } from '@/features/chat'
+import { useDesktop } from '@/desktop/DesktopContext'
 
 // ── Icons ──────────────────────────────────────────────────────────────────
 
-function SparkIcon() {
+function AssistantLogo({ size = 16 }: { size?: number }) {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M12 2L9.5 9.5L2 12L9.5 14.5L12 22L14.5 14.5L22 12L14.5 9.5L12 2Z" />
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect x="4.5" y="7" width="15" height="11.5" rx="5.5" fill="currentColor" opacity="0.95" />
+      <circle cx="10" cy="12.5" r="1.15" fill="rgba(88, 28, 135, 0.9)" />
+      <circle cx="14" cy="12.5" r="1.15" fill="rgba(88, 28, 135, 0.9)" />
+      <path d="M9.2 15.6c1 .7 4.6.7 5.6 0" stroke="rgba(88, 28, 135, 0.9)" strokeWidth="1" strokeLinecap="round" />
+      <path d="M12 7V4.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="12" cy="3.5" r="1.1" fill="currentColor" />
     </svg>
   )
 }
@@ -66,29 +72,13 @@ const QUICK_SUGGESTIONS = [
   "What's your background?",
 ]
 
-/** Dev-only: example questions to pair with PORTFOLIO_OWNER_PREFIX in server `.env` (prefix not shown here). */
-const DEV_OWNER_MODE_HINTS = [
-  'Explain the PDM serial frame parse and validation path.',
-  'What functions implement channel telemetry in my PDM project?',
-  'Summarize tradeoffs for how this portfolio chat RAG is built.',
-]
-
 // ── Sub-components ─────────────────────────────────────────────────────────
 
 function WelcomeScreen({ onPick }: { onPick: (s: string) => void }) {
   return (
     <div className="chat-win-welcome">
-      <div className="chat-win-avatar">
-        <div className="chat-win-avatar-glow" aria-hidden />
-        <SparkIcon />
-      </div>
-
       <div className="chat-win-welcome-text">
         <h2 className="chat-win-welcome-title">Portfolio AI</h2>
-        <p className="chat-win-welcome-subtitle">
-          I know this portfolio inside and out &mdash; ask me about projects,
-          experience, skills, or anything else.
-        </p>
       </div>
 
       <div className="chat-win-suggestions-grid">
@@ -110,9 +100,11 @@ function WelcomeScreen({ onPick }: { onPick: (s: string) => void }) {
 function MessageScroller({
   messages,
   loading,
+  lightMode,
 }: {
   messages: ReturnType<typeof useChatController>['messages']
   loading: boolean
+  lightMode: boolean
 }) {
   const listRef = useRef<HTMLDivElement>(null)
 
@@ -136,7 +128,7 @@ function MessageScroller({
             key={m.id}
             message={m}
             isTyping={loading && i === messages.length - 1 && m.role === 'assistant'}
-            lightMode
+            lightMode={lightMode}
           />
         ))}
       </div>
@@ -150,6 +142,7 @@ function ChatContent() {
   const [input, setInput] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const { theme } = useDesktop()
   const { messages, loading, error, sendUserText } = useChatController()
   const hasMessages = messages.length > 0
 
@@ -177,7 +170,7 @@ function ChatContent() {
       {/* ── Identity strip ───────────────────────────────────────────── */}
       <div className="chat-win-header">
         <div className="chat-win-header-avatar">
-          <SparkIcon />
+          <AssistantLogo />
         </div>
         <div className="chat-win-header-meta">
           <span className="chat-win-header-name">Portfolio AI</span>
@@ -203,7 +196,7 @@ function ChatContent() {
       {/* ── Body ─────────────────────────────────────────────────────── */}
       <div className="chat-win-body">
         {hasMessages ? (
-          <MessageScroller messages={messages} loading={loading} />
+          <MessageScroller messages={messages} loading={loading} lightMode={theme === 'light'} />
         ) : (
           <WelcomeScreen onPick={pickSuggestion} />
         )}
@@ -220,25 +213,6 @@ function ChatContent() {
       {hasMessages && !loading && (
         <div className="chat-win-quick-row">
           {QUICK_SUGGESTIONS.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => pickSuggestion(s)}
-              className="chat-win-quick-chip"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {import.meta.env.DEV && hasMessages && !loading && (
-        <div className="chat-win-quick-row chat-win-quick-row--dev" aria-label="Developer interview-prep hints">
-          <p className="chat-win-dev-hint">
-            Dev only: start your message with the server&apos;s <code>PORTFOLIO_OWNER_PREFIX</code>, then one of
-            these questions (or your own).
-          </p>
-          {DEV_OWNER_MODE_HINTS.map((s) => (
             <button
               key={s}
               type="button"

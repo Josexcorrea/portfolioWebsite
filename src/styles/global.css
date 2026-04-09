@@ -2451,6 +2451,79 @@ body {
   animation: snap-preview-in 120ms var(--mac-ease-snap) forwards;
 }
 
+.snap-suggest-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(8, 10, 20, 0.34);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.snap-suggest-card {
+  width: min(540px, 94vw);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  background: rgba(23, 25, 36, 0.9);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  padding: 16px;
+  color: #f5f5f7;
+}
+
+.snap-suggest-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.snap-suggest-subtitle {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  color: rgba(245, 245, 247, 0.76);
+}
+
+.snap-suggest-actions {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.snap-suggest-actions + .snap-suggest-actions {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.16);
+}
+
+.snap-suggest-btn {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.snap-suggest-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.34);
+}
+
+.snap-suggest-btn--ghost {
+  background: transparent;
+}
+
+.snap-suggest-subtitle strong {
+  color: #c7d2fe;
+  font-weight: 700;
+}
+
 @keyframes snap-preview-in {
   from { opacity: 0; transform: scale(0.96); }
   to   { opacity: 1; transform: scale(1); }
@@ -3004,7 +3077,7 @@ body {
   position: relative;
   padding: 8px 14px;
   word-break: break-word;
-  box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.12);
+  box-shadow: none;
 }
 
 .chat-imsg-bubble--user {
@@ -3073,40 +3146,26 @@ body {
 
 .chat-win-quick-chip {
   flex-shrink: 0;
-  padding: 5px 12px;
+  padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid rgba(168, 85, 247, 0.28);
-  background: rgba(168, 85, 247, 0.08);
-  color: rgba(196, 181, 253, 0.85);
-  font-size: 11px;
+  border: 1px solid rgba(107, 33, 168, 0.42);
+  background: rgba(167, 139, 250, 0.22);
+  color: rgba(55, 16, 96, 0.96);
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: background 140ms ease, border-color 140ms ease;
 }
 
 .chat-win-quick-chip:hover {
-  background: rgba(168, 85, 247, 0.18);
-  border-color: rgba(168, 85, 247, 0.45);
+  background: rgba(167, 139, 250, 0.32);
+  border-color: rgba(107, 33, 168, 0.58);
 }
 
 .chat-win-quick-chip:focus-visible {
   outline: 2px solid rgba(168, 85, 247, 0.6);
   outline-offset: 2px;
-}
-
-.chat-win-quick-row--dev {
-  flex-wrap: wrap;
-  border-top: 1px dashed rgba(168, 85, 247, 0.22);
-  padding-top: 10px;
-  margin-top: 2px;
-}
-
-.chat-win-dev-hint {
-  flex-basis: 100%;
-  font-size: 10px;
-  color: rgba(196, 181, 253, 0.42);
-  margin: 0 0 4px;
-  line-height: 1.35;
 }
 
 /* Welcome screen */
@@ -3169,25 +3228,28 @@ body {
   gap: 8px;
   width: 100%;
   max-width: 340px;
+  justify-items: center;
 }
 
 .chat-win-suggestion-card {
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(0, 0, 0, 0.04);
-  color: rgba(0, 0, 0, 0.62);
-  font-size: 11px;
-  text-align: left;
+  border: 1px solid rgba(0, 0, 0, 0.24);
+  background: rgba(255, 255, 255, 0.82);
+  color: rgba(0, 0, 0, 0.9);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
   cursor: pointer;
   transition: background 140ms ease, border-color 140ms ease;
   line-height: 1.4;
+  box-shadow: none;
 }
 
 .chat-win-suggestion-card:hover {
-  background: rgba(168, 85, 247, 0.08);
-  border-color: rgba(168, 85, 247, 0.28);
-  color: rgba(88, 28, 135, 0.9);
+  background: rgba(237, 233, 254, 0.95);
+  border-color: rgba(107, 33, 168, 0.45);
+  color: rgba(44, 13, 79, 0.98);
 }
 
 .chat-win-suggestion-card:focus-visible {
@@ -5678,8 +5740,28 @@ body {
 [data-theme="light"] .chat-win-composer { background: rgba(0, 0, 0, 0.03); border-top-color: rgba(0, 0, 0, 0.07); }
 [data-theme="light"] .chat-win-welcome-title { color: rgba(0, 0, 0, 0.82); }
 [data-theme="light"] .chat-win-welcome-subtitle { color: rgba(0, 0, 0, 0.48); }
-[data-theme="light"] .chat-win-suggestion-card { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); color: rgba(0,0,0,0.62); }
+[data-theme="light"] .chat-win-suggestion-card { background: rgba(255,255,255,0.9); border-color: rgba(0,0,0,0.24); color: rgba(0,0,0,0.9); }
 [data-theme="light"] .chat-win-input { background: rgba(255,255,255,0.80); border-color: rgba(0,0,0,0.12); color: rgba(0,0,0,0.82); }
+
+[data-theme="dark"] .chat-win-header { background: rgba(11, 13, 22, 0.82); border-bottom-color: rgba(255, 255, 255, 0.08); }
+[data-theme="dark"] .chat-win-header-name { color: rgba(244, 245, 255, 0.94); }
+[data-theme="dark"] .chat-win-header-sub { color: rgba(196, 200, 224, 0.65); }
+[data-theme="dark"] .chat-win-clear-btn { color: rgba(196, 200, 224, 0.72); }
+[data-theme="dark"] .chat-win-clear-btn:hover { background: rgba(255, 255, 255, 0.08); color: rgba(244, 245, 255, 0.94); }
+[data-theme="dark"] .chat-win-composer { background: rgba(11, 13, 22, 0.72); border-top-color: rgba(255, 255, 255, 0.08); }
+[data-theme="dark"] .chat-win-welcome-title { color: rgba(244, 245, 255, 0.94); }
+[data-theme="dark"] .chat-win-welcome-subtitle { color: rgba(226, 230, 248, 0.9); }
+[data-theme="dark"] .chat-win-body { background: rgba(14, 17, 30, 0.92); }
+[data-theme="dark"] .chat-win-messages { background: rgba(14, 17, 30, 0.92); }
+[data-theme="dark"] .chat-win-suggestion-card { background: rgba(27, 31, 47, 0.92); border-color: rgba(167, 139, 250, 0.36); color: rgba(238, 234, 255, 0.96); }
+[data-theme="dark"] .chat-win-suggestion-card:hover { background: rgba(56, 35, 92, 0.92); border-color: rgba(196, 181, 253, 0.62); color: #ffffff; }
+[data-theme="dark"] .chat-win-quick-chip { border-color: rgba(196, 181, 253, 0.46); background: rgba(124, 58, 237, 0.36); color: rgba(245, 241, 255, 0.98); }
+[data-theme="dark"] .chat-win-quick-chip:hover { background: rgba(124, 58, 237, 0.5); border-color: rgba(216, 204, 255, 0.72); }
+[data-theme="dark"] .chat-win-input { background: rgba(23, 27, 42, 0.95); border-color: rgba(255, 255, 255, 0.16); color: rgba(245, 247, 255, 0.95); }
+[data-theme="dark"] .chat-win-input::placeholder { color: rgba(196, 200, 224, 0.62); }
+[data-theme="dark"] .chat-win-send-btn { background: linear-gradient(135deg, #7c3aed, #5b21b6); color: #ffffff; }
+[data-theme="dark"] .chat-win-send-btn:hover:not(:disabled) { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+[data-theme="dark"] .chat-win-send-btn:disabled { background: rgba(124, 58, 237, 0.36); color: rgba(245, 247, 255, 0.72); }
 
 /* ================================================================
    Per-App dark-mode content fixes
@@ -6173,6 +6255,19 @@ body {
 .mac-window[data-app-id="chat"]:not(.mac-window--focused) .mac-titlebar-title {
   color: rgba(210, 185, 255, 0.48);
   text-shadow: none;
+}
+
+[data-theme="dark"] .mac-window[data-app-id="chat"] {
+  background:
+    radial-gradient(ellipse at 14% 0%, rgba(124, 58, 237, 0.28) 0%, rgba(11, 14, 24, 0.96) 56%),
+    radial-gradient(ellipse at 90% 100%, rgba(99, 43, 194, 0.22) 0%, rgba(8, 11, 20, 0.98) 52%),
+    linear-gradient(150deg, rgba(15, 18, 30, 0.98) 0%, rgba(10, 13, 24, 0.98) 100%);
+  border-color: rgba(139, 92, 246, 0.38);
+}
+
+[data-theme="dark"] .mac-window[data-app-id="chat"].mac-window--focused {
+  border-color: rgba(167, 139, 250, 0.62);
+  box-shadow: none;
 }
 
 /* Scrollbars: indigo / portfolio AI purple */

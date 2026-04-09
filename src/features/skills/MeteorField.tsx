@@ -17,8 +17,17 @@ const SPAWN_RADIUS = 5.5
 const CULL_DIST = 12
 /** Match SkillsDome WIREFRAME_RADIUS. Game ends when a meteor reaches the globe. */
 const GLOBE_RADIUS = 1.4
+const METEOR_APP_COLORS = [
+  0x007aff, // finder/about blue
+  0x059669, // projects green
+  0xff3b30, // experience red
+  0x4a9eff, // skills blue
+  0xfc4a1a, // resume orange
+  0x1a73e8, // contact blue
+  0xa855f7, // chat purple
+] as const
 
-/** Single meteor: one white mesh. */
+/** Single meteor: high-contrast mesh visible in dark and light themes. */
 function MeteorMesh({
   meteorRef,
   index,
@@ -37,13 +46,14 @@ function MeteorMesh({
     g.rotateX(Math.PI / 2)
     return g
   }, [])
+  const meteorColor = METEOR_APP_COLORS[Math.abs(id) % METEOR_APP_COLORS.length]
   const material = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
-        color: 0xffffff,
+        color: meteorColor,
         toneMapped: false,
       }),
-    []
+    [meteorColor]
   )
 
   useFrame((state) => {

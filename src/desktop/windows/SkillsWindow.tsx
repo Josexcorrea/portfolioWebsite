@@ -1,15 +1,18 @@
 import { Suspense, lazy, useState } from 'react'
 import { skillBranches } from '@/data/content'
 import ClickSpark from '@/components/ui/ClickSpark'
+import { useDesktop } from '@/desktop/DesktopContext'
 
 const SkillsDome = lazy(() =>
   import('@/features/skills').then(m => ({ default: m.SkillsDome })),
 )
 
-const WIREFRAME_COLOR = '#9FB0CC'
+const WIREFRAME_COLOR_DARK = '#9FB0CC'
+const WIREFRAME_COLOR_LIGHT = '#22D3EE'
 
 export function SkillsWindow() {
   const [sparksActive, setSparksActive] = useState(false)
+  const { theme, focusedApp } = useDesktop()
 
   return (
     <ClickSpark
@@ -30,8 +33,8 @@ export function SkillsWindow() {
       >
         <SkillsDome
           branches={skillBranches}
-          wireframeColor={WIREFRAME_COLOR}
-          isSectionActive
+          wireframeColor={theme === 'light' ? WIREFRAME_COLOR_LIGHT : WIREFRAME_COLOR_DARK}
+          isSectionActive={focusedApp === 'skills'}
           onGameStart={() => setSparksActive(true)}
           onGameOver={() => setSparksActive(false)}
         />

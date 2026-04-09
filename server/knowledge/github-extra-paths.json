@@ -1,11 +1,9 @@
 {
-  "josexcorrea/fiu-pdm": [
-    "app.py",
-    "requirements.txt",
-    "package.json",
-    "electron/main.js",
-    "electron/main.ts",
-    "src/index.tsx",
-    "src/App.tsx"
+  "josexcorrea/pdm": [
+    "backend/firmware/usb_reader.py",
+    "backend/firmware/stm32_sim.py",
+    "backend/firmware/test_cases.py",
+    "frontend/package.json",
+    "frontend/vite.config.ts"
   ]
 }

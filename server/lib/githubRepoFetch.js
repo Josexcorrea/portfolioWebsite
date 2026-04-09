@@ -18,6 +18,52 @@ export const MAX_CHARS_PER_FILE = 24_000
 
 const BRANCHES = ['main', 'master']
 
+/** Cache: "owner/repo" (lowercase) -> default branch name or null */
+const defaultBranchCache = new Map()
+
+async function fetchDefaultBranchName(owner, repo) {
+  const cacheKey = `${owner}/${repo}`.toLowerCase()
+  if (defaultBranchCache.has(cacheKey)) return defaultBranchCache.get(cacheKey)
+
+  const token = process.env.GITHUB_TOKEN
+  const headers = {
+    Accept: 'application/vnd.github+json',
+    'User-Agent': 'portfolio-build-knowledge',
+    'X-GitHub-Api-Version': '2022-11-28',
+  }
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  try {
+    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`
+    const controller = new AbortController()
+    const t = setTimeout(() => controller.abort(), 20000)
+    const res = await fetch(url, { headers, signal: controller.signal })
+    clearTimeout(t)
+    if (!res.ok) {
+      defaultBranchCache.set(cacheKey, null)
+      return null
+    }
+    const data = await res.json()
+    const br = typeof data?.default_branch === 'string' ? data.default_branch : null
+    defaultBranchCache.set(cacheKey, br)
+    return br
+  } catch {
+    defaultBranchCache.set(cacheKey, null)
+    return null
+  }
+}
+
+async function branchCandidates(owner, repo) {
+  const out = []
+  const add = (b) => {
+    if (b && !out.includes(b)) out.push(b)
+  }
+  for (const b of BRANCHES) add(b)
+  const def = await fetchDefaultBranchName(owner, repo)
+  add(def)
+  return out
+}
+
 /**
  * Tried after README for every repo (404 = skipped quietly).
  * Focus: structure, deps, and likely entry points — not full trees.
@@ -91,7 +137,14 @@ function loadPerRepoExtraPaths() {
   try {
     const raw = readFileSync(EXTRA_PATHS_FILE, 'utf8')
     const j = JSON.parse(raw)
-    if (j && typeof j === 'object' && !Array.isArray(j)) return j
+    if (!j || typeof j !== 'object' || Array.isArray(j)) return {}
+    /** Keys are normalized to lowercase owner/repo for lookup stability. */
+    const normalized = {}
+    for (const [k, v] of Object.entries(j)) {
+      if (typeof k !== 'string' || !Array.isArray(v)) continue
+      normalized[k.toLowerCase()] = v
+    }
+    return normalized
   } catch {
     /* ignore */
   }
@@ -103,10 +156,11 @@ async function fetchRawOnce(owner, repo, branch, filePath) {
 }
 
 /**
- * Try main then master.
+ * Try main, master, then the repo's default_branch (e.g. feature branches named "PDM").
  */
 export async function fetchGithubFile(owner, repo, filePath) {
-  for (const branch of BRANCHES) {
+  const branches = await branchCandidates(owner, repo)
+  for (const branch of branches) {
     const text = await fetchRawOnce(owner, repo, branch, filePath)
     if (text) return { text, branch }
   }
@@ -147,7 +201,7 @@ export async function fetchGithubRepoDocuments(documents, options = {}) {
   const delayMs = parseInt(process.env.GITHUB_FETCH_DELAY_MS || '80', 10)
 
   for (const { owner, repo } of repos) {
-    const key = `${owner}/${repo}`
+    const key = `${owner}/${repo}`.toLowerCase()
     const customPaths = (
       Array.isArray(perRepoExtras[key]) ? perRepoExtras[key].filter((p) => typeof p === 'string' && p.trim()) : []
     ).slice(0, 20)

@@ -16,6 +16,7 @@ import {
   type DesktopState,
   type LayoutMetrics,
   type SnapZone,
+  type LayoutSlot,
   type WindowAnimPhase,
   type WindowPosition,
   type WindowSize,
@@ -98,7 +99,62 @@ function snapGeometry(
       size: { w, h: availH },
     }
   }
+  if (zone === 'top-left') {
+    return {
+      position: { x: 0, y: top },
+      size: { w: Math.round(window.innerWidth / 2), h: Math.round(availH / 2) },
+    }
+  }
+  if (zone === 'top-right') {
+    const w = Math.round(window.innerWidth / 2)
+    return {
+      position: { x: window.innerWidth - w, y: top },
+      size: { w, h: Math.round(availH / 2) },
+    }
+  }
+  if (zone === 'bottom-left') {
+    const h = Math.round(availH / 2)
+    return {
+      position: { x: 0, y: top + (availH - h) },
+      size: { w: Math.round(window.innerWidth / 2), h },
+    }
+  }
+  if (zone === 'bottom-right') {
+    const w = Math.round(window.innerWidth / 2)
+    const h = Math.round(availH / 2)
+    return {
+      position: { x: window.innerWidth - w, y: top + (availH - h) },
+      size: { w, h },
+    }
+  }
   return null
+}
+
+function slotGeometry(
+  slot: LayoutSlot,
+  m: LayoutMetrics,
+): { position: WindowPosition; size: WindowSize } {
+  const top = m.menuBarBottom
+  const availH = window.innerHeight - top - m.dockReserved
+  const halfW = Math.round(window.innerWidth / 2)
+  const halfH = Math.round(availH / 2)
+  switch (slot) {
+    case 'left':
+      return { position: { x: 0, y: top }, size: { w: halfW, h: availH } }
+    case 'right':
+      return { position: { x: window.innerWidth - halfW, y: top }, size: { w: halfW, h: availH } }
+    case 'top-left':
+      return { position: { x: 0, y: top }, size: { w: halfW, h: halfH } }
+    case 'top-right':
+      return { position: { x: window.innerWidth - halfW, y: top }, size: { w: halfW, h: halfH } }
+    case 'bottom-left':
+      return { position: { x: 0, y: top + (availH - halfH) }, size: { w: halfW, h: halfH } }
+    case 'bottom-right':
+      return {
+        position: { x: window.innerWidth - halfW, y: top + (availH - halfH) },
+        size: { w: halfW, h: halfH },
+      }
+  }
 }
 
 function measureLayout(): LayoutMetrics {
@@ -380,6 +436,33 @@ function desktopReducer(state: DesktopState, action: DesktopAction): DesktopStat
       }
     }
 
+    case 'APPLY_LAYOUT_PRESET': {
+      if (action.assignments.length === 0) return state
+      let z = state.zCounter
+      const newWindows = { ...state.windows }
+      for (const { appId, slot } of action.assignments) {
+        const win = newWindows[appId]
+        if (!win.isOpen || win.isMinimized) continue
+        const geo = slotGeometry(slot, m)
+        z += 1
+        newWindows[appId] = {
+          ...win,
+          snapZone: slot,
+          isMaximized: false,
+          preSnapSnapshot: win.preSnapSnapshot ?? { position: win.position, size: win.size },
+          position: geo.position,
+          size: geo.size,
+          zIndex: z,
+        }
+      }
+      return {
+        ...state,
+        windows: newWindows,
+        zCounter: z,
+        focusedApp: action.focusAppId,
+      }
+    }
+
     case 'TOGGLE_MAXIMIZE': {
       const win = state.windows[action.appId]
       const nextZ = state.zCounter + 1
@@ -520,6 +603,7 @@ type DesktopContextValue = {
   resizeApp: (appId: AppId, size: WindowSize, position: WindowPosition) => void
   toggleMaximize: (appId: AppId) => void
   snapApp: (appId: AppId, zone: SnapZone) => void
+  applyLayoutPreset: (focusAppId: AppId, assignments: Array<{ appId: AppId; slot: LayoutSlot }>) => void
   animDoneApp: (appId: AppId) => void
   isOpen: (appId: AppId) => boolean
   isMinimized: (appId: AppId) => boolean
@@ -626,6 +710,13 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'SNAP', appId, zone })
   }, [])
 
+  const applyLayoutPreset = useCallback(
+    (focusAppId: AppId, assignments: Array<{ appId: AppId; slot: LayoutSlot }>) => {
+      dispatch({ type: 'APPLY_LAYOUT_PRESET', focusAppId, assignments })
+    },
+    [],
+  )
+
   const animDoneApp = useCallback((appId: AppId) => {
     dispatch({ type: 'ANIM_DONE', appId })
   }, [])
@@ -675,6 +766,7 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
       resizeApp,
       toggleMaximize,
       snapApp,
+      applyLayoutPreset,
       animDoneApp,
       isOpen,
       isMinimized,
@@ -699,6 +791,7 @@ export function DesktopProvider({ children }: { children: ReactNode }) {
       resizeApp,
       toggleMaximize,
       snapApp,
+      applyLayoutPreset,
       animDoneApp,
       isOpen,
       isMinimized,

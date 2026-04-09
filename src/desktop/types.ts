@@ -11,7 +11,33 @@ export type AppId =
 export type WindowPosition = { x: number; y: number }
 export type WindowSize = { w: number; h: number }
 
-export type SnapZone = 'left' | 'right' | 'top' | null
+export type SnapZone =
+  | 'left'
+  | 'right'
+  | 'top'
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right'
+  | null
+
+export type LayoutSlot =
+  | 'left'
+  | 'right'
+  | 'top-left'
+  | 'top-right'
+  | 'bottom-left'
+  | 'bottom-right'
+
+export type LayoutPresetId =
+  | 'left-main-2stack'
+  | 'right-main-2stack'
+  | 'quad-grid'
+
+export type LayoutPreset = {
+  id: LayoutPresetId
+  slots: LayoutSlot[]
+}
 
 /**
  * Tracks the animation phase of a window so MacWindow can apply the
@@ -71,6 +97,11 @@ export type DesktopAction =
   | { type: 'RESIZE'; appId: AppId; size: WindowSize; position: WindowPosition }
   | { type: 'TOGGLE_MAXIMIZE'; appId: AppId }
   | { type: 'SNAP'; appId: AppId; zone: SnapZone }
+  | {
+      type: 'APPLY_LAYOUT_PRESET'
+      focusAppId: AppId
+      assignments: Array<{ appId: AppId; slot: LayoutSlot }>
+    }
   /** Fired by MacWindow once an entry/exit animation finishes. */
   | { type: 'ANIM_DONE'; appId: AppId }
   /** Restore every minimized window to the foreground. */

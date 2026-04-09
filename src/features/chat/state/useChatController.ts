@@ -116,6 +116,7 @@ type UseChatControllerResult = {
   hasMessages: boolean
   showSuggestions: boolean
   sendUserText: (text: string) => Promise<void>
+  stopStream: () => void
   resetError: () => void
 }
 
@@ -130,6 +131,16 @@ export function useChatController(): UseChatControllerResult {
   }, [])
 
   const resetError = useCallback(() => dispatch({ type: 'reset_error' }), [])
+
+  const stopStream = useCallback(() => {
+    abortRef.current?.abort()
+    const activeId = state.activeAssistantId
+    if (activeId) {
+      dispatch({ type: 'done', payload: { assistantId: activeId } })
+    } else {
+      dispatch({ type: 'set_loading', payload: { loading: false } })
+    }
+  }, [state.activeAssistantId])
 
   const hasMessages = state.messages.length > 0
   const showSuggestions = !hasMessages && !state.loading
@@ -214,9 +225,10 @@ export function useChatController(): UseChatControllerResult {
       hasMessages,
       showSuggestions,
       sendUserText,
+      stopStream,
       resetError,
     }),
-    [hasMessages, resetError, sendUserText, showSuggestions, state.error, state.loading, state.messages]
+    [hasMessages, resetError, sendUserText, stopStream, showSuggestions, state.error, state.loading, state.messages]
   )
 }
 

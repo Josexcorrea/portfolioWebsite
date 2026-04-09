@@ -4,7 +4,12 @@ import { useDesktop } from './DesktopContext'
 import { MacWindowControls } from './MacWindowControls'
 import { useDrag } from './useDrag'
 import { useResize, type ResizeEdge } from './useResize'
-import type { AppId, SnapZone, WindowAnimPhase } from './types'
+import {
+  type AppId,
+  type LayoutSlot,
+  type SnapZone,
+  type WindowAnimPhase,
+} from './types'
 
 type MacWindowProps = {
   appId:    AppId
@@ -36,7 +41,65 @@ function snapPreviewStyle(zone: SnapZone): React.CSSProperties {
   if (zone === 'top') {
     return { left: 0, top: TOP_STACK, width: '100vw', bottom: DOCK_RESERVED }
   }
+  if (zone === 'top-left') {
+    return { left: 0, top: TOP_STACK, width: '50vw', height: 'calc((100vh - var(--mac-menubar-stack) - var(--mac-dock-reserved)) / 2)' }
+  }
+  if (zone === 'top-right') {
+    return {
+      right: 0,
+      top: TOP_STACK,
+      width: '50vw',
+      height: 'calc((100vh - var(--mac-menubar-stack) - var(--mac-dock-reserved)) / 2)',
+    }
+  }
+  if (zone === 'bottom-left') {
+    return {
+      left: 0,
+      bottom: DOCK_RESERVED,
+      width: '50vw',
+      height: 'calc((100vh - var(--mac-menubar-stack) - var(--mac-dock-reserved)) / 2)',
+    }
+  }
+  if (zone === 'bottom-right') {
+    return {
+      right: 0,
+      bottom: DOCK_RESERVED,
+      width: '50vw',
+      height: 'calc((100vh - var(--mac-menubar-stack) - var(--mac-dock-reserved)) / 2)',
+    }
+  }
   return {}
+}
+
+function autoLayoutForZone(
+  zone: Exclude<SnapZone, 'top' | null>,
+  currentAppId: AppId,
+  otherWindowIds: AppId[],
+): Array<{ appId: AppId; slot: LayoutSlot }> {
+  if ((zone === 'top-left' || zone === 'top-right' || zone === 'bottom-left' || zone === 'bottom-right') && otherWindowIds.length >= 3) {
+    return [{
+      appId: currentAppId,
+      slot: zone,
+    }]
+  }
+
+  const assignments: Array<{ appId: AppId; slot: LayoutSlot }> = []
+
+  if (zone === 'top-left' || zone === 'bottom-left' || zone === 'left') {
+    assignments.push({ appId: currentAppId, slot: 'left' })
+    if (otherWindowIds[0]) assignments.push({ appId: otherWindowIds[0], slot: 'top-right' })
+    if (otherWindowIds[1]) assignments.push({ appId: otherWindowIds[1], slot: 'bottom-right' })
+    return assignments
+  }
+
+  if (zone === 'top-right' || zone === 'bottom-right' || zone === 'right') {
+    assignments.push({ appId: currentAppId, slot: 'right' })
+    if (otherWindowIds[0]) assignments.push({ appId: otherWindowIds[0], slot: 'top-left' })
+    if (otherWindowIds[1]) assignments.push({ appId: otherWindowIds[1], slot: 'bottom-left' })
+    return assignments
+  }
+
+  return [{ appId: currentAppId, slot: 'left' }]
 }
 
 export function MacWindow({ appId, title, children }: MacWindowProps) {
@@ -47,21 +110,56 @@ export function MacWindow({ appId, title, children }: MacWindowProps) {
     dragApp,
     resizeApp,
     snapApp,
+    applyLayoutPreset,
     animDoneApp,
     layoutMetrics,
   } = useDesktop()
   const win = windows[appId]
   const [hoverZone, setHoverZone] = useState<SnapZone>(null)
 
+  const windowCandidates = Object.entries(windows)
+    .filter(([id, w]) => id !== appId && w.isOpen && !w.isMinimized)
+    .sort((a, b) => b[1].zIndex - a[1].zIndex) as [AppId, typeof win][]
+
+  const applySnap = (zone: SnapZone) => {
+    if (!zone) {
+      return
+    }
+    if (zone === 'top') {
+      snapApp(appId, 'top')
+      return
+    }
+    const otherIds = windowCandidates.map(([candidateId]) => candidateId)
+
+    if (
+      (zone === 'top-left' || zone === 'top-right' || zone === 'bottom-left' || zone === 'bottom-right') &&
+      otherIds.length >= 3
+    ) {
+      const quadSlots: LayoutSlot[] = ['top-left', 'top-right', 'bottom-left', 'bottom-right']
+      const remainingSlots = quadSlots.filter(slot => slot !== zone)
+      applyLayoutPreset(appId, [
+        { appId, slot: zone },
+        { appId: otherIds[0], slot: remainingSlots[0] },
+        { appId: otherIds[1], slot: remainingSlots[1] },
+        { appId: otherIds[2], slot: remainingSlots[2] },
+      ])
+      return
+    }
+
+    if ((zone === 'left' || zone === 'right' || zone === 'top-left' || zone === 'top-right' || zone === 'bottom-left' || zone === 'bottom-right') && otherIds.length >= 2) {
+      const assignments = autoLayoutForZone(zone, appId, otherIds)
+      applyLayoutPreset(appId, assignments)
+      return
+    }
+
+    snapApp(appId, zone)
+  }
+
   const { handleDragStart, handleDragMove, handleDragEnd } = useDrag(
     (x, y) => dragApp(appId, { x, y }),
     setHoverZone,
-    (finalZone) => {
-      if (finalZone === 'top') {
-        snapApp(appId, 'top')
-      } else if (finalZone) {
-        snapApp(appId, finalZone)
-      }
+    finalZone => {
+      applySnap(finalZone)
       setHoverZone(null)
     },
     layoutMetrics.menuBarBottom,
@@ -144,9 +242,7 @@ export function MacWindow({ appId, title, children }: MacWindowProps) {
         <div
           className="mac-titlebar"
           onPointerDown={(e) => {
-            if (!isMaximizedOrTop) {
-              handleDragStart(e, win.position.x, win.position.y)
-            }
+            handleDragStart(e, win.position.x, win.position.y)
           }}
           onPointerMove={handleDragMove}
           onPointerUp={(e) => handleDragEnd(e)}

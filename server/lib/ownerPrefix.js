@@ -7,7 +7,8 @@ export function parseOwnerPrefix(raw) {
   if (!prefix) {
     return { ownerMode: false, questionForRag: raw }
   }
-  const trimmed = String(raw || '').trimStart()
+  const normalizedRaw = raw == null ? '' : String(raw)
+  const trimmed = normalizedRaw.trimStart()
   if (!trimmed.startsWith(prefix)) {
     return { ownerMode: false, questionForRag: raw }
   }

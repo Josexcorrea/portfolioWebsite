@@ -9,16 +9,68 @@ type DragState = {
 }
 
 const SNAP_THRESHOLD = 24
+const CORNER_THRESHOLD = 40
+const EDGE_HYSTERESIS = 18
+const SNAP_CANCEL_DISTANCE = 56
 
 function detectSnapZone(
   clientX: number,
   clientY: number,
   menuBarBottom: number,
 ): SnapZone {
+  const nearLeft = clientX <= CORNER_THRESHOLD
+  const nearRight = clientX >= window.innerWidth - CORNER_THRESHOLD
+  const nearTop = clientY <= menuBarBottom + CORNER_THRESHOLD
+  const nearBottom = clientY >= window.innerHeight - CORNER_THRESHOLD
+
+  if (nearLeft && nearTop) return 'top-left'
+  if (nearRight && nearTop) return 'top-right'
+  if (nearLeft && nearBottom) return 'bottom-left'
+  if (nearRight && nearBottom) return 'bottom-right'
+
   if (clientY <= menuBarBottom + 8) return 'top'
   if (clientX <= SNAP_THRESHOLD) return 'left'
   if (clientX >= window.innerWidth - SNAP_THRESHOLD) return 'right'
   return null
+}
+
+function stillInsideZoneWithHysteresis(
+  zone: SnapZone,
+  clientX: number,
+  clientY: number,
+  menuBarBottom: number,
+): boolean {
+  if (!zone) return false
+  switch (zone) {
+    case 'left':
+      return clientX <= SNAP_THRESHOLD + EDGE_HYSTERESIS
+    case 'right':
+      return clientX >= window.innerWidth - SNAP_THRESHOLD - EDGE_HYSTERESIS
+    case 'top':
+      return clientY <= menuBarBottom + 8 + EDGE_HYSTERESIS
+    case 'top-left':
+      return (
+        clientX <= CORNER_THRESHOLD + EDGE_HYSTERESIS &&
+        clientY <= menuBarBottom + CORNER_THRESHOLD + EDGE_HYSTERESIS
+      )
+    case 'top-right':
+      return (
+        clientX >= window.innerWidth - CORNER_THRESHOLD - EDGE_HYSTERESIS &&
+        clientY <= menuBarBottom + CORNER_THRESHOLD + EDGE_HYSTERESIS
+      )
+    case 'bottom-left':
+      return (
+        clientX <= CORNER_THRESHOLD + EDGE_HYSTERESIS &&
+        clientY >= window.innerHeight - CORNER_THRESHOLD - EDGE_HYSTERESIS
+      )
+    case 'bottom-right':
+      return (
+        clientX >= window.innerWidth - CORNER_THRESHOLD - EDGE_HYSTERESIS &&
+        clientY >= window.innerHeight - CORNER_THRESHOLD - EDGE_HYSTERESIS
+      )
+    default:
+      return false
+  }
 }
 
 /**
@@ -33,6 +85,8 @@ export function useDrag(
 ) {
   const drag = useRef<DragState | null>(null)
   const currentZone = useRef<SnapZone>(null)
+  const zoneAnchor = useRef<{ x: number; y: number } | null>(null)
+  const commitSuppressed = useRef(false)
 
   const handleDragStart = useCallback(
     (e: React.PointerEvent, currentX: number, currentY: number) => {
@@ -46,6 +100,8 @@ export function useDrag(
         startElemY:  currentY,
       }
       currentZone.current = null
+      zoneAnchor.current = null
+      commitSuppressed.current = false
     },
     [],
   )
@@ -65,10 +121,28 @@ export function useDrag(
       onDrag(clampedX, clampedY)
 
       if (onSnapZoneChange) {
-        const zone = detectSnapZone(e.clientX, e.clientY, menuBarBottom)
+        let zone = detectSnapZone(e.clientX, e.clientY, menuBarBottom)
+        if (!zone && stillInsideZoneWithHysteresis(
+          currentZone.current,
+          e.clientX,
+          e.clientY,
+          menuBarBottom,
+        )) {
+          zone = currentZone.current
+        }
+
         if (zone !== currentZone.current) {
           currentZone.current = zone
+          zoneAnchor.current = zone ? { x: e.clientX, y: e.clientY } : null
+          commitSuppressed.current = false
           onSnapZoneChange(zone)
+        } else if (zone && zoneAnchor.current) {
+          const movedX = e.clientX - zoneAnchor.current.x
+          const movedY = e.clientY - zoneAnchor.current.y
+          const movedDistance = Math.hypot(movedX, movedY)
+          if (movedDistance >= SNAP_CANCEL_DISTANCE) {
+            commitSuppressed.current = true
+          }
         }
       }
     },
@@ -81,10 +155,13 @@ export function useDrag(
         const zone = e
           ? detectSnapZone(e.clientX, e.clientY, menuBarBottom)
           : currentZone.current
-        onDragEnd(zone)
+        const finalZone = commitSuppressed.current ? null : zone
+        onDragEnd(finalZone)
       }
       drag.current = null
       currentZone.current = null
+      zoneAnchor.current = null
+      commitSuppressed.current = false
       if (onSnapZoneChange) onSnapZoneChange(null)
     },
     [onDragEnd, onSnapZoneChange, menuBarBottom],

@@ -26,7 +26,7 @@ export function ContactWindow() {
         style={{ borderBottom: '1px solid var(--color-line)' }}
       >
         <div
-          className="flex items-center justify-center rounded-2xl shadow-md"
+          className="flex items-center justify-center rounded-2xl"
           style={{
             width: 48,
             height: 48,
@@ -52,7 +52,7 @@ export function ContactWindow() {
       {/* Draft preview card */}
       <div className="px-6 pt-5 pb-4">
         <div
-          className="contact-win-card rounded-2xl overflow-hidden shadow-sm"
+          className="contact-win-card rounded-2xl overflow-hidden"
           style={{ border: '1px solid var(--color-line)' }}
         >
           {/* Compose toolbar */}
@@ -147,13 +147,11 @@ export function ContactWindow() {
             style={{ textDecoration: 'none' }}
             onMouseEnter={e => {
               const el = e.currentTarget as HTMLAnchorElement
-              el.style.boxShadow = '0 4px 18px rgba(26,115,232,0.18)'
               el.style.borderColor = 'rgba(26,115,232,0.35)'
               el.style.transform = 'translateY(-1px)'
             }}
             onMouseLeave={e => {
               const el = e.currentTarget as HTMLAnchorElement
-              el.style.boxShadow = ''
               el.style.borderColor = ''
               el.style.transform = 'translateY(0)'
             }}
@@ -164,7 +162,6 @@ export function ContactWindow() {
                 width: 44,
                 height: 44,
                 background: 'linear-gradient(145deg, #1a73e8, #0d47a1)',
-                boxShadow: '0 2px 8px rgba(26,115,232,0.30)',
               }}
             >
               <svg viewBox="0 0 24 24" style={{ width: 24, height: 24 }} fill="none">
@@ -194,13 +191,11 @@ export function ContactWindow() {
             style={{ textDecoration: 'none' }}
             onMouseEnter={e => {
               const el = e.currentTarget as HTMLAnchorElement
-              el.style.boxShadow = '0 4px 18px rgba(234,67,53,0.18)'
               el.style.borderColor = 'rgba(234,67,53,0.35)'
               el.style.transform = 'translateY(-1px)'
             }}
             onMouseLeave={e => {
               const el = e.currentTarget as HTMLAnchorElement
-              el.style.boxShadow = ''
               el.style.borderColor = ''
               el.style.transform = 'translateY(0)'
             }}
@@ -212,7 +207,6 @@ export function ContactWindow() {
                 height: 44,
                 background: 'var(--color-surface)',
                 border: '1px solid var(--color-line)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               }}
             >
               <svg viewBox="0 0 24 24" style={{ width: 26, height: 26 }} fill="none">

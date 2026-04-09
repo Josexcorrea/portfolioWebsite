@@ -451,14 +451,14 @@ export function SkillsDome({
 
   // When game over: keyboard only (not mouse) returns to normal globe
   useEffect(() => {
-    if (!gameOver) return
+    if (!gameOver || !isSectionActive) return
     const onKeyDown = (e: KeyboardEvent) => {
       resetToGlobe()
       e.preventDefault()
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [gameOver, resetToGlobe])
+  }, [gameOver, isSectionActive, resetToGlobe])
 
   const spawnIntervalSec = METEOR_BASE_INTERVAL / Math.pow(2, wave)
   const speedMultiplier = 1 + wave * 0.4

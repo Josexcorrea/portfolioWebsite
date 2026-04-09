@@ -75,6 +75,59 @@ function shouldRunWebSearch(lastQuestion, rag) {
   return true
 }
 
+function looksLikeSnippetRequest(qLower) {
+  return (
+    /\b(code|snippet|file|path|implementation|source|show me|exact)\b/.test(qLower) ||
+    /\bwhere\b.+\b(in|inside)\b/.test(qLower)
+  )
+}
+
+function looksLikeRiskOrSecurityQuestion(qLower) {
+  return /\b(what breaks|if skipped|security|signature|verify|validation|webhook|auth|token)\b/.test(qLower)
+}
+
+function hasStrongCodeEvidence(chunks) {
+  if (!chunks || chunks.length === 0) return false
+  const text = chunks.map((c) => `${c.documentTitle}\n${c.chunkText}`).join('\n')
+  return (
+    /```/.test(text) ||
+    /\b(src|server|api|lib|routes|components)\/[^\s)]+/.test(text) ||
+    /\b(function|const|let|class|export|import)\b/.test(text)
+  )
+}
+
+function buildOwnerContractInstruction({
+  snippetRequested,
+  securityStyleQuestion,
+  codeEvidenceStrong,
+}) {
+  const lines = [
+    '## Owner-mode response contract (enforced)',
+    '- Use this structure in order:',
+    '  1) **Snippet**',
+    '  2) **Why it matters**',
+  ]
+  if (securityStyleQuestion) {
+    lines.push('  3) **What breaks if skipped**')
+  }
+
+  if (snippetRequested && !codeEvidenceStrong) {
+    lines.push(
+      '- For **Snippet** when context is insufficient, output exactly this sentence (then continue the remaining sections):',
+      '  "I cannot show the exact snippet from retrieved context for this request."',
+      '- After that sentence, name what evidence is available from retrieved context (paths/titles only if present).',
+      '- Do not switch to generic tutorial mode.',
+    )
+  } else if (snippetRequested && codeEvidenceStrong) {
+    lines.push(
+      '- For **Snippet**, provide a short concrete snippet grounded in retrieved context (no invented paths/functions).',
+    )
+  }
+
+  lines.push('- Never show internal RAG labels like [S1].')
+  return lines.join('\n')
+}
+
 /**
  * Shared by Express (`createChatRouter`) and Vercel (`api/chat.js`).
  * @param {import('express').Request} req
@@ -235,12 +288,21 @@ export async function executeChatPost(req, res, { openai, config, store }) {
         .join('\n\n---\n\n')
     }
 
+    const snippetRequested = looksLikeSnippetRequest(qLower)
+    const securityStyleQuestion = looksLikeRiskOrSecurityQuestion(qLower)
+    const codeEvidenceStrong = hasStrongCodeEvidence(chunks)
+
     let systemContent = config.systemPromptBase
     if (wantsDetail && config.systemPromptDetailMode) {
       systemContent += `\n\n${config.systemPromptDetailMode}`
     }
     if (ownerMode && config.systemPromptOwnerMode) {
       systemContent += `\n\n${config.systemPromptOwnerMode}`
+      systemContent += `\n\n${buildOwnerContractInstruction({
+        snippetRequested,
+        securityStyleQuestion,
+        codeEvidenceStrong,
+      })}`
     }
     if (webContext) systemContent += `\n\n## Web search results\n${webContext}`
     systemContent += `\n\n## Portfolio context\n${context}`
@@ -323,6 +385,9 @@ export async function executeChatPost(req, res, { openai, config, store }) {
         webSearch: Boolean(webResults?.length),
         detailMode: wantsDetail,
         ownerMode,
+        ownerQuestionAfterPrefix: ownerMode ? questionForRag : null,
+        ownerSnippetRequested: ownerMode ? snippetRequested : false,
+        ownerCodeEvidenceStrong: ownerMode ? codeEvidenceStrong : false,
         maxTokens,
       }),
     )
