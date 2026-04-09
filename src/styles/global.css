@@ -4713,6 +4713,42 @@ body {
   animation: boot-hint-pulse 3s ease-in-out infinite;
 }
 
+/* Light mode: boot screen uses pale wallpaper vars — switch typography to dark for contrast */
+[data-theme="light"] .boot-clock-date {
+  color: rgba(0, 0, 0, 0.62);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="light"] .boot-clock-time {
+  color: rgba(0, 0, 0, 0.82);
+  text-shadow:
+    0 2px 28px rgba(255, 255, 255, 0.95),
+    0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="light"] .boot-name {
+  color: #000;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95), 0 1px 14px rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="light"] .boot-hint {
+  color: rgba(0, 0, 0, 0.52);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
+  animation: boot-hint-pulse-light 3s ease-in-out infinite;
+}
+
+@keyframes boot-hint-pulse-light {
+  0%, 100% { opacity: 0.88; }
+  50%       { opacity: 1; }
+}
+
+[data-theme="light"] .boot-avatar {
+  border-color: rgba(0, 0, 0, 0.14);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.75),
+    0 6px 22px rgba(0, 0, 0, 0.14);
+}
+
 /* ================================================================
    Projects & Experience Windows ? pw-* utility classes
    ================================================================ */
