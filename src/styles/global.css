@@ -2971,8 +2971,55 @@ body {
 .chat-win-messages-inner {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 10px;
   padding: 0 14px;
+}
+
+/* iMessage-style bubbles (Portfolio AI chat window, light pane) */
+.chat-imsg-bubble {
+  position: relative;
+  padding: 8px 14px;
+  word-break: break-word;
+  box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.12);
+}
+
+.chat-imsg-bubble--user {
+  background: #007aff;
+  color: #ffffff;
+  border-radius: 18px;
+  border-bottom-right-radius: 5px;
+}
+
+.chat-imsg-bubble--user p {
+  margin: 0;
+  color: inherit;
+}
+
+.chat-imsg-bubble--assistant {
+  background: #e9e9eb;
+  color: #1c1c1e;
+  border-radius: 18px;
+  border-bottom-left-radius: 5px;
+}
+
+.chat-imsg-bubble--assistant .chat-dot {
+  background: rgba(60, 60, 67, 0.45);
+}
+
+/* KaTeX readable on gray assistant bubble */
+.chat-imsg-bubble--assistant .chat-markdown .katex {
+  color: #1c1c1e;
+}
+.chat-imsg-bubble--assistant .chat-markdown .katex-display {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+.chat-imsg-bubble--assistant .chat-markdown .katex-display > .katex {
+  color: #1c1c1e;
+}
+.chat-imsg-bubble--assistant .chat-markdown .katex .mrel,
+.chat-imsg-bubble--assistant .chat-markdown .katex .mbin {
+  color: #1c1c1e;
 }
 
 /* Error bar */

@@ -32,7 +32,7 @@ export function buildRagContext(chunks) {
     )
   }
   const header =
-    'Each block is a retrievable source. Tags [S1], [S2], … are stable for this turn — use them when you quote.\n\n'
+    'Each block below is retrieved knowledge for this question. Headings [S1], [S2], … are **for your reference only**—do not mention them or cite them in your reply to the user.\n\n'
   const blocks = chunks.map((c, i) => {
     const tag = `S${i + 1}`
     return `### [${tag}] ${c.documentTitle}\nPassage (verbatim from the knowledge index):\n${c.chunkText}`

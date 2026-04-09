@@ -3,6 +3,13 @@
  * Models often wrap formulas in ( ... ) instead of $$ ... $$ and emit {{ }} from JSON/streaming.
  */
 
+/** Strip internal RAG chunk tags if the model still emits them (e.g. ([S1])). */
+export function stripRagSourceMarkersForDisplay(text: string): string {
+  return text
+    .replace(/\s*\(\[S\d+\]\)/g, '')
+    .replace(/\s*\[S\d+\]\s*/g, ' ')
+}
+
 function collapseDoubleBraces(latex: string): string {
   let s = latex
   let prev = ''
