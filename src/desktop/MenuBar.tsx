@@ -191,8 +191,8 @@ export function MenuBar() {
       label: 'Download Resume',
       onClick: () => {
         const a = document.createElement('a')
-        a.href = '/resume.pdf'
-        a.download = 'Jose_Correa_Resume.pdf'
+        a.href = '/JoseCorrea_SE.pdf'
+        a.download = 'JoseCorrea_SE.pdf'
         a.click()
         closeMenu()
       },

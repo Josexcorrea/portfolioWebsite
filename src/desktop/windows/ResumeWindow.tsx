@@ -1,4 +1,4 @@
-const RESUME_PDF = '/resume.pdf'
+const RESUME_PDF = '/JoseCorrea_SE.pdf'
 
 /**
  * Inline PDF viewer styled like macOS Preview.
@@ -9,12 +9,12 @@ export function ResumeWindow() {
     <div className="resume-shell">
       {/* Toolbar strip */}
       <div className="resume-toolbar">
-        <span className="resume-toolbar-filename">resume.pdf</span>
+        <span className="resume-toolbar-filename">JoseCorrea_SE.pdf</span>
         <span className="resume-toolbar-badge">PDF</span>
         <div style={{ flex: 1 }} />
         <a
           href={RESUME_PDF}
-          download="Jose_Correa_Resume.pdf"
+          download="JoseCorrea_SE.pdf"
           className="resume-download-btn"
           aria-label="Download resume PDF"
         >
@@ -49,7 +49,7 @@ export function ResumeWindow() {
 
       {/* Status bar */}
       <div className="resume-statusbar">
-        <span>resume.pdf</span>
+        <span>JoseCorrea_SE.pdf</span>
       </div>
     </div>
   )
