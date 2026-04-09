@@ -231,6 +231,7 @@ export function MacWindow({ appId, title, children }: MacWindowProps) {
         className={[
           'mac-window',
           animClass(phase),
+          win.isMinimized && phase === 'idle' ? 'mac-window--minimized' : '',
           isFocused ? 'mac-window--focused' : '',
           isMaximizedOrTop ? 'mac-window--maximized' : '',
           isSnapped && !isMaximizedOrTop ? 'mac-window--snapped' : '',

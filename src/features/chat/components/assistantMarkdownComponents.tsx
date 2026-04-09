@@ -59,24 +59,24 @@ export function chatMarkdownComponents(tone: 'dark' | 'light'): Components {
         )
       }
       return (
-        <pre
-          className={
-            light
-              ? 'my-2 rounded-lg border border-black/10 bg-black/[0.04] overflow-auto scrollbar-glass p-2.5'
-              : 'my-2 rounded-lg border border-border/80 bg-black/30 overflow-auto scrollbar-glass p-2.5'
-          }
-        >
-          <code
-            {...props}
-            className={className ? className : light ? 'text-[#1c1c1e]' : 'text-white/95'}
-          >
-            {children}
-          </code>
-        </pre>
+        <div className="chat-rich-card chat-rich-card--code">
+          <pre className="chat-rich-code-pre scrollbar-glass">
+            <code
+              {...props}
+              className={className ? className : light ? 'chat-rich-code-text chat-rich-code-text--light' : 'chat-rich-code-text chat-rich-code-text--dark'}
+            >
+              {children}
+            </code>
+          </pre>
+        </div>
       )
     },
-    ul: ({ ...props }) => <ul {...props} className="list-disc list-outside pl-5 space-y-1 my-2" />,
-    ol: ({ ...props }) => <ol {...props} className="list-decimal list-outside pl-5 space-y-1 my-2" />,
+    ul: ({ ...props }) => (
+      <ul {...props} className="chat-rich-list chat-rich-list--ul list-disc list-inside space-y-1.5 my-2" />
+    ),
+    ol: ({ ...props }) => (
+      <ol {...props} className="chat-rich-list chat-rich-list--ol list-decimal list-inside space-y-1.5 my-2" />
+    ),
     li: ({ ...props }) => (
       <li
         {...props}
@@ -108,11 +108,7 @@ export function chatMarkdownComponents(tone: 'dark' | 'light'): Components {
     blockquote: ({ ...props }) => (
       <blockquote
         {...props}
-        className={
-          light
-            ? 'my-2 border-l-2 border-[#007aff]/45 bg-black/[0.04] px-3 py-2 rounded-r-lg text-[#3a3a3c]'
-            : 'my-2 border-l-2 border-accent/40 bg-black/20 px-3 py-2 rounded-r-lg text-white/90'
-        }
+        className="chat-rich-card chat-rich-card--quote"
       />
     ),
     h1: ({ ...props }) => (
@@ -146,31 +142,25 @@ export function chatMarkdownComponents(tone: 'dark' | 'light'): Components {
       />
     ),
     table: ({ ...props }) => (
-      <div className="my-2 overflow-auto scrollbar-glass">
-        <table {...props} className="w-full border-collapse text-[0.85rem]" />
+      <div className="chat-rich-card chat-rich-card--table">
+        <div className="chat-rich-table-scroll scrollbar-glass">
+          <table {...props} className="chat-rich-table text-[0.85rem]" />
+        </div>
       </div>
     ),
     thead: ({ ...props }) => (
-      <thead {...props} className={light ? 'text-[#1c1c1e]' : 'text-white'} />
+      <thead {...props} className={light ? 'chat-rich-table-head chat-rich-table-head--light' : 'chat-rich-table-head chat-rich-table-head--dark'} />
     ),
     th: ({ ...props }) => (
       <th
         {...props}
-        className={
-          light
-            ? 'border border-black/12 bg-black/[0.05] px-2 py-1 text-left text-[#1c1c1e]'
-            : 'border border-border/80 bg-white/[0.06] px-2 py-1 text-left'
-        }
+        className={light ? 'chat-rich-table-th chat-rich-table-th--light' : 'chat-rich-table-th chat-rich-table-th--dark'}
       />
     ),
     td: ({ ...props }) => (
       <td
         {...props}
-        className={
-          light
-            ? 'border border-black/12 px-2 py-1 text-[#1c1c1e]'
-            : 'border border-border/80 px-2 py-1 text-white/90'
-        }
+        className={light ? 'chat-rich-table-td chat-rich-table-td--light' : 'chat-rich-table-td chat-rich-table-td--dark'}
       />
     ),
   }

@@ -42,6 +42,10 @@ export function looksLikeFreshnessOrGeneralWebQuery(qLower) {
   )
 }
 
+export function looksLikeWeatherQuery(qLower) {
+  return /\b(weather|forecast|temperature)\b/i.test(qLower)
+}
+
 export function looksLikeThisPortfolioMetaQuestion(qLower) {
   return (
     /\b(this portfolio|portfolio website|this site|this website|your site|jose'?s (site|portfolio)|the site'?s)\b/.test(
@@ -63,8 +67,10 @@ export function looksLikePortfolioScopedQuestion(qLower) {
  * @param {{ maxScore: number, chunksLen: number }} rag
  */
 export function shouldRunWebSearch(lastQuestion, rag) {
-  if (!process.env.TAVILY_API_KEY) return false
   const qLower = lastQuestion.toLowerCase()
+  // Weather gets a direct fallback provider when Tavily is unavailable.
+  if (looksLikeWeatherQuery(qLower)) return true
+  if (!process.env.TAVILY_API_KEY) return false
   if (looksLikeFreshnessOrGeneralWebQuery(qLower)) return true
   if (looksLikeThisPortfolioMetaQuestion(qLower)) return false
   const isPortfolioScoped = looksLikePortfolioScopedQuestion(qLower)
@@ -106,7 +112,10 @@ export function buildOwnerContractInstruction({
     '- Use this structure in order:',
     '  1) **Client-ready script** (natural spoken explanation you can read out loud)',
     '  2) **Cheat sheet** (key points, tradeoffs, likely follow-up questions)',
-    '  3) **Visual aid** (a compact table, process steps, or simple text diagram when useful)',
+    '  3) **Support block** with adaptive title:',
+    '     - Use **Code** when showing code/snippets.',
+    '     - Use **Diagram** when showing process flow/visual structure.',
+    '     - Use **Equation** when showing formulas/math rules.',
   ]
   if (securityStyleQuestion) lines.push('- Include a short **What breaks if skipped** subsection in the cheat sheet.')
 
@@ -122,8 +131,9 @@ export function buildOwnerContractInstruction({
       '- Add a **Snippet** subsection at the top of the cheat sheet.',
       '- The **Snippet** subsection must contain: (a) a file/path line, and (b) a fenced code block copied from retrieved context.',
       '- Prefer the most relevant function-level code (e.g., `export function ...`) when available.',
-      '- After the snippet, include **Line-by-line breakdown** explaining each shown line or logical block and why it matters.',
-      '- Keep the script concise; keep deep detail in the cheat sheet.',
+      '- After the snippet, include **Line-by-line breakdown** (or logical block-by-block when formatting is compressed) explaining what each part does and why it matters.',
+      '- The **Client-ready script** must be substantive: explain the problem this code solves, how the flow works end-to-end, and one practical tradeoff.',
+      '- Avoid generic filler like "this function wraps behavior"; anchor explanations to the shown snippet.',
       '- When retrieved code evidence exists, do not use the sentence "I cannot show the exact snippet from retrieved context for this request."',
     )
   }

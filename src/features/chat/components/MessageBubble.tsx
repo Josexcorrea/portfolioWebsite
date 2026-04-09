@@ -12,15 +12,9 @@ export function MessageBubble({
 }) {
   const isUser = message.role === 'user'
 
-  const bubbleClass = lightMode
-    ? `chat-imsg-bubble max-w-[min(92%,34rem)] text-[0.9375rem] leading-snug ${
-        isUser ? 'chat-imsg-bubble--user' : 'chat-imsg-bubble--assistant'
-      }`
-    : `max-w-[92%] text-[0.875rem] leading-relaxed ${
-        isUser
-          ? 'pl-3 pr-3 py-1.5 border-l-2 border-accent/60 bg-white/[0.03] text-text-pri'
-          : 'py-1 text-white/85'
-      }`
+  const bubbleClass = `chat-imsg-bubble max-w-[min(92%,34rem)] ${
+    isUser ? 'chat-imsg-bubble--user' : 'chat-imsg-bubble--assistant'
+  } ${lightMode ? 'text-[0.9375rem] leading-snug' : 'text-[0.92rem] leading-relaxed'}`
 
   return (
     <div className={isUser ? 'flex justify-end' : 'flex justify-start'}>

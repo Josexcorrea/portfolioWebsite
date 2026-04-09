@@ -72,6 +72,8 @@ const QUICK_SUGGESTIONS = [
   "What's your background?",
 ]
 
+const CHAT_INPUT_MAX_HEIGHT = 132
+
 // ── Sub-components ─────────────────────────────────────────────────────────
 
 function WelcomeScreen({ onPick }: { onPick: (s: string) => void }) {
@@ -170,21 +172,37 @@ function MessageScroller({
 
 function ChatContent() {
   const [input, setInput] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   const { theme } = useDesktop()
   const { messages, loading, error, ownerModeLatched, sendUserText } = useChatController()
   const hasMessages = messages.length > 0
 
+  const submitCurrentInput = useCallback(async () => {
+    const text = input.trim()
+    if (!text || loading) return
+    setInput('')
+    await sendUserText(text)
+  }, [input, loading, sendUserText])
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault()
-      const text = input.trim()
-      if (!text || loading) return
-      setInput('')
-      await sendUserText(text)
+      await submitCurrentInput()
     },
-    [input, loading, sendUserText],
+    [submitCurrentInput],
+  )
+
+  const handleComposerKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key !== 'Enter') return
+      if (e.nativeEvent.isComposing) return
+      const coarsePointer = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+      if (e.shiftKey || coarsePointer) return
+      e.preventDefault()
+      void submitCurrentInput()
+    },
+    [submitCurrentInput],
   )
 
   const pickSuggestion = useCallback(
@@ -194,6 +212,13 @@ function ChatContent() {
     },
     [sendUserText],
   )
+
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = 'auto'
+    el.style.height = `${Math.min(el.scrollHeight, CHAT_INPUT_MAX_HEIGHT)}px`
+  }, [input])
 
   return (
     <div className="chat-win-root">
@@ -259,14 +284,15 @@ function ChatContent() {
 
       {/* ── Composer ─────────────────────────────────────────────────── */}
       <form onSubmit={handleSubmit} className="chat-win-composer">
-        <input
+        <textarea
           ref={inputRef}
-          type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleComposerKeyDown}
           placeholder="Ask anything…"
           disabled={loading}
           autoFocus
+          rows={1}
           className="chat-win-input"
           aria-label="Message"
         />

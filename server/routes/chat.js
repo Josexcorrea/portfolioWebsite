@@ -38,27 +38,70 @@ function buildSnippetEvidence(chunks, qLower) {
     ),
   )
 
+  function sanitizeFileHint(rawHint) {
+    const hint = String(rawHint || '').trim()
+    if (!hint) return ''
+
+    const githubPathMatch = hint.match(/\/blob\/(?:main|master)\/([A-Za-z0-9._/-]+\.[A-Za-z0-9]+)/)
+    if (githubPathMatch?.[1]) return githubPathMatch[1]
+
+    const dashedPathMatch = hint.match(/—\s*([A-Za-z0-9._/-]+\.[A-Za-z0-9]+)/)
+    if (dashedPathMatch?.[1]) return dashedPathMatch[1]
+
+    const plainPathMatch = hint.match(/\b([A-Za-z0-9._/-]+\.(?:ts|tsx|js|jsx|mjs|cjs|py|go|java|rs|json|md|yml|yaml))\b/)
+    if (plainPathMatch?.[1]) return plainPathMatch[1]
+
+    return hint
+      .split(/\s+(?:Source:|Repository:|Branch:|import|export|const|function|interface)\b/i)[0]
+      .trim()
+  }
+
   function extractFilePath(raw) {
     const m = String(raw || '').match(/\bFile:\s*([^\n]+)/i)
-    return m ? m[1].trim() : null
+    return m ? sanitizeFileHint(m[1]) : null
   }
 
   function extractRelevantSnippet(raw) {
     const text = String(raw || '')
     if (!text) return ''
-    const exportIdx = text.search(/\bexport function\b/i)
-    if (exportIdx >= 0) {
-      const start = Math.max(0, exportIdx - 200)
-      const end = Math.min(text.length, exportIdx + 700)
-      return text.slice(start, end).trim()
+    const fenced = text.match(/```(?:[a-zA-Z0-9_-]+)?\n([\s\S]*?)```/)
+    if (fenced?.[1]) return fenced[1].trim()
+
+    const lines = text.split('\n')
+    if (lines.length === 0) return ''
+
+    const anchorRegexes = [
+      /\bexport\s+(async\s+)?function\b/,
+      /\bexport\s+const\b/,
+      /\bfunction\s+[A-Za-z0-9_]+\s*\(/,
+      /\buse[A-Z][A-Za-z0-9_]*\s*\(/,
+    ]
+    const anchor = lines.findIndex((line) => anchorRegexes.some((rx) => rx.test(line)))
+    const start = Math.max(0, (anchor >= 0 ? anchor : 0) - 4)
+
+    // Prefer complete logical blocks over fixed character slices.
+    let end = Math.min(lines.length, start + 80)
+    if (anchor >= 0) {
+      let braceDepth = 0
+      let opened = false
+      for (let i = anchor; i < Math.min(lines.length, anchor + 120); i++) {
+        const line = lines[i]
+        for (const ch of line) {
+          if (ch === '{') {
+            braceDepth++
+            opened = true
+          }
+          if (ch === '}' && braceDepth > 0) braceDepth--
+        }
+        end = Math.max(end, i + 1)
+        if (opened && braceDepth === 0 && i > anchor + 3) break
+      }
     }
-    const hookIdx = text.search(/\buse[A-Z][A-Za-z0-9_]*\s*\(/)
-    if (hookIdx >= 0) {
-      const start = Math.max(0, hookIdx - 180)
-      const end = Math.min(text.length, hookIdx + 680)
-      return text.slice(start, end).trim()
-    }
-    return text.slice(0, 900).trim()
+
+    return lines
+      .slice(start, end)
+      .join('\n')
+      .trim()
   }
 
   const scored = chunks
@@ -96,20 +139,145 @@ function buildSnippetEvidence(chunks, qLower) {
 
 function firstSnippetFromEvidence(snippetEvidence) {
   const text = String(snippetEvidence || '')
-  const fileMatch = text.match(/FileHint:\s*([^\n]+)/)
-  const codeMatch = text.match(/```([\s\S]*?)```/)
-  if (!fileMatch || !codeMatch) return null
-  const file = fileMatch[1].trim()
-  const code = codeMatch[1].trim()
-  if (!file || !code) return null
+  if (!text) return null
+
+  const sections = text
+    .split(/\n### Evidence \d+\n/g)
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  const scored = sections
+    .map((section) => {
+      const fileMatch = section.match(/FileHint:\s*([^\n]+)/)
+      const blocks = Array.from(section.matchAll(/```([\s\S]*?)```/g)).map((m) => String(m[1] || '').trim())
+      const bestBlock = blocks
+        .map((b) => {
+          const codeLikeHits =
+            (b.match(/\b(function|const|let|return|if|for|map|reduce|async|await|=>)\b/g) || []).length
+          const score = b.length + codeLikeHits * 80 - (/\bgithub:|file:/i.test(b) ? 140 : 0)
+          return { b, score }
+        })
+        .sort((a, b) => b.score - a.score)[0]
+      return {
+        file: fileMatch?.[1]?.trim() || '',
+        code: bestBlock?.b || '',
+        score: bestBlock?.score || -1,
+      }
+    })
+    .filter((x) => x.file && x.code)
+    .sort((a, b) => b.score - a.score)
+
+  if (!scored[0]) return null
+  const chosen = scored[0]
+  const looksCodeLike =
+    chosen.code.length >= 80 &&
+    /\b(function|const|let|return|if|for|map|reduce|async|await|=>|class|export|import)\b/.test(chosen.code)
+  if (!looksCodeLike) return null
+  return { file: chosen.file, code: chosen.code }
+}
+
+function firstSnippetFromContext(contextText) {
+  const text = String(contextText || '')
+  if (!text) return null
+  const lines = text.split('\n')
+  const anchor = lines.findIndex((line) =>
+    /\bexport\s+(async\s+)?function\b|\bexport\s+const\b|\bfunction\s+[A-Za-z0-9_]+\s*\(/.test(line),
+  )
+  if (anchor < 0) return null
+
+  const start = Math.max(0, anchor - 4)
+  const end = Math.min(lines.length, anchor + 60)
+  const code = lines.slice(start, end).join('\n').trim()
+  const looksCodeLike =
+    code.length >= 80 &&
+    /\b(function|const|let|return|if|for|map|reduce|async|await|=>|class|export|import)\b/.test(code)
+  if (!looksCodeLike) return null
+
+  let file = 'retrieved context'
+  for (let i = anchor; i >= Math.max(0, anchor - 20); i--) {
+    const m = lines[i].match(/\b(?:FileHint|File|Title):\s*([^\n]+)/)
+    if (m?.[1]) {
+      file = m[1].trim()
+      break
+    }
+  }
   return { file, code }
 }
 
-function ownerSnippetFallbackAnswer(snippetEvidence) {
-  const picked = firstSnippetFromEvidence(snippetEvidence)
+function explainCodeLine(line) {
+  const trimmed = String(line || '').trim()
+  if (!trimmed) return 'Blank line for readability.'
+  if (/^\/\//.test(trimmed)) return 'Comment describing intent or constraints for the next logic.'
+  if (/^import\s+/.test(trimmed)) return 'Imports a dependency used by this function.'
+  if (/^export\s+(async\s+)?function\s+/.test(trimmed)) return 'Declares the exported function entry point.'
+  if (/^(const|let)\s+/.test(trimmed)) return 'Creates a local variable used in the computation.'
+  if (/^if\s*\(/.test(trimmed)) return 'Guard/branch: changes behavior based on a condition.'
+  if (/^return\b/.test(trimmed)) return 'Returns the computed value to the caller.'
+  if (/=>/.test(trimmed)) return 'Defines inline callback logic for transformation/iteration.'
+  return 'Performs one step in the core algorithm flow.'
+}
+
+function normalizeSnippetForDisplay(code) {
+  const raw = String(code || '').trim()
+  if (!raw) return ''
+  const noFences = raw.replace(/```/g, '').trim()
+  const withoutMeta = noFences
+    .replace(/^(Repository|Source|FileHint|File|Branch)\s*:[^\n]*\n?/gim, '')
+    .trim()
+  if (withoutMeta.includes('\n')) return withoutMeta
+  if (withoutMeta.length < 180) return withoutMeta
+
+  // If retrieval returned compressed one-line code, restore readable newlines.
+  return withoutMeta
+    .replace(/;\s*/g, ';\n')
+    .replace(/\{\s*/g, '{\n')
+    .replace(/\}\s*/g, '}\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
+function buildLineByLine(code, maxLines = 16) {
+  const normalized = normalizeSnippetForDisplay(code)
+  const lines = normalized.split('\n').map((line) => line.trimEnd())
+  const shown = lines.slice(0, maxLines)
+  const items = shown.map((line, idx) => {
+    const n = idx + 1
+    const compact = (line || '(blank)').slice(0, 140)
+    return `- Line ${n}: \`${compact}\`\n  - ${explainCodeLine(line)}`
+  })
+  if (lines.length > maxLines) {
+    items.push(
+      `- Remaining lines: snippet has ${lines.length - maxLines} additional lines continuing the same logic.`,
+    )
+  }
+  return items.join('\n')
+}
+
+function ownerSnippetFallbackAnswer(snippetEvidence, contextText) {
+  const picked = firstSnippetFromEvidence(snippetEvidence) || firstSnippetFromContext(contextText)
   if (!picked) return null
+  const code = normalizeSnippetForDisplay(picked.code)
+  const usableCode =
+    code.length >= 80 &&
+    (/\b(function|const|let|return|if|for|map|reduce|async|await|=>|class|export|import)\b/.test(code) ||
+      /[{}();=>]/.test(code))
+  if (!usableCode) return null
+  const lineByLine = buildLineByLine(code)
+  const fnNameMatch = code.match(
+    /\bexport\s+(?:async\s+)?function\s+([A-Za-z0-9_]+)|\b(?:const|let)\s+([A-Za-z0-9_]+)\s*=\s*(?:async\s*)?\(/,
+  )
+  const fnName = fnNameMatch?.[1] || fnNameMatch?.[2] || 'this function'
+  const flowHints = [
+    /\bmap\s*\(/.test(code) ? 'transforms input arrays with `map`' : null,
+    /\breduce\s*\(/.test(code) ? 'aggregates values with `reduce`' : null,
+    /\bif\s*\(/.test(code) ? 'uses guard conditions for branch logic' : null,
+    /\breturn\b/.test(code) ? 'returns computed results for UI/business use' : null,
+  ].filter(Boolean)
+  const flowLine = flowHints.length
+    ? `In this snippet, ${flowHints.slice(0, 2).join(' and ')}.`
+    : 'The snippet shows a concrete compute flow that turns inputs into output decisions.'
   return `Client-ready script
-I pulled the exact implementation from your indexed repo context, so let’s use the real function instead of a generic example. This snippet is the core piece to discuss in interviews because it shows the actual data/query flow in your project.
+This is the strongest exact snippet available from retrieved repo context, centered on \`${fnName}\`. Use this as your interview anchor: it shows the real compute flow, not a generic example. ${flowLine} A practical tradeoff here is readability versus compactness when logic gets dense, so explain why each step is separated and testable.
 
 ---
 
@@ -117,21 +285,62 @@ I pulled the exact implementation from your indexed repo context, so let’s use
 ### Snippet
 File: \`${picked.file}\`
 \`\`\`
-${picked.code}
+${code}
 \`\`\`
 
 ### What it does
-This function/hook wraps one focused behavior and returns the value your UI uses.
+This function is part of your real project logic and is shown directly from retrieved code context.
 
 ### Line-by-line breakdown
-- Import lines: bring in required query/API utilities and types.
-- \`export function ...\`: defines the reusable function/hook entry point.
-- Return block: executes the query/call and provides configured behavior.
-- Query key/endpoint/options lines: control cache identity, request target, and freshness/behavior.
+${lineByLine}
 
 ### Why it matters
-This is the operational source of truth for that feature, so using this exact snippet keeps answers grounded and useful for debugging.
+Using the exact snippet keeps your explanation grounded, debuggable, and credible for technical Q&A.
 `
+}
+
+function hasContradictorySnippetAnswer(answer) {
+  const text = String(answer || '')
+  const hasCannot = text.includes('I cannot show the exact snippet from retrieved context for this request.')
+  const hasCodeBlock = /```[\s\S]+```/.test(text)
+  return hasCannot && hasCodeBlock
+}
+
+function normalizeOwnerSnippetAnswer(answer, { codeEvidenceStrong }) {
+  let text = String(answer || '').trim()
+  if (!text) return text
+  if (codeEvidenceStrong) {
+    text = text.replace(/I cannot show the exact snippet from retrieved context for this request\./g, '').trim()
+  }
+  text = normalizeOwnerSupportHeading(text)
+  return text
+}
+
+function inferSupportHeading(sectionText) {
+  const s = String(sectionText || '')
+  if (/```[\s\S]*?```/.test(s) || /(^|\n)\s*(import|export|const|let|function)\b/.test(s)) return 'Code'
+  if (/```mermaid/.test(s) || /\b(diagram|flow|sequence)\b/i.test(s)) return 'Diagram'
+  if (/\$\$[\s\S]*?\$\$|\$[^$\n]+\$|\\\(|\\\[|\b(equation|formula|rule)\b/i.test(s)) return 'Equation'
+  return 'Diagram'
+}
+
+function normalizeOwnerSupportHeading(text) {
+  const source = String(text || '')
+  const rx = /(^|\n)(#{1,6}\s*)?(Part\s*3\s*[—-]\s*)?Visual Aid\s*:?\s*(\n|$)/i
+  const m = source.match(rx)
+  if (!m || typeof m.index !== 'number') return source
+
+  const matchStart = m.index
+  const matchEnd = matchStart + m[0].length
+  const after = source.slice(matchEnd)
+  const nextHeadingIdx = after.search(/\n#{1,6}\s+/)
+  const sectionBody = nextHeadingIdx >= 0 ? after.slice(0, nextHeadingIdx) : after
+  const title = inferSupportHeading(sectionBody)
+  const prefix = m[1] || ''
+  const hashes = m[2] || '### '
+
+  const normalizedHeading = `${prefix}${hashes}${title}\n`
+  return source.slice(0, matchStart) + normalizedHeading + after.replace(/^\n+/, '')
 }
 
 /**
@@ -314,7 +523,8 @@ export async function executeChatPost(req, res, { openai, config, store }) {
     const webSearchUnavailable =
       !process.env.TAVILY_API_KEY &&
       !looksLikeThisPortfolioMetaQuestion(qLower) &&
-      (looksLikeFreshnessOrGeneralWebQuery(qLower) || !looksLikePortfolioScopedQuestion(qLower))
+      (looksLikeFreshnessOrGeneralWebQuery(qLower) || !looksLikePortfolioScopedQuestion(qLower)) &&
+      !webContext
     const webNoResults = webWanted && (!webResults || webResults.length === 0)
 
     const securityStyleQuestion = looksLikeRiskOrSecurityQuestion(qLower)
@@ -382,31 +592,44 @@ export async function executeChatPost(req, res, { openai, config, store }) {
 
     let fullAnswer = ''
     const formatter = createStreamMathFormatter()
-    const stream = await openai.chat.completions.create({
-      model: config.CHAT_MODEL,
-      messages: apiMessages,
-      max_tokens: maxTokens,
-      stream: true,
-    })
+    if (ownerMode && snippetRequested) {
+      const completion = await openai.chat.completions.create({
+        model: config.CHAT_MODEL,
+        messages: apiMessages,
+        max_tokens: maxTokens,
+        stream: false,
+      })
+      fullAnswer = String(completion.choices?.[0]?.message?.content || '')
+      fullAnswer = normalizeOwnerSnippetAnswer(fullAnswer, { codeEvidenceStrong })
 
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta?.content
-      if (delta) {
-        fullAnswer += delta
-        const formatted = formatter.push(delta)
-        if (formatted) writeNdjson(res, { type: 'delta', content: formatted })
+      const missingRequiredCode = codeEvidenceStrong && !/```[\s\S]+```/.test(fullAnswer)
+      if (hasContradictorySnippetAnswer(fullAnswer) || missingRequiredCode) {
+        const fallback = ownerSnippetFallbackAnswer(snippetEvidence, context)
+        if (fallback) fullAnswer = fallback
+      }
+
+      const formatted = formatter.push(fullAnswer)
+      if (formatted) writeNdjson(res, { type: 'delta', content: formatted })
+    } else {
+      const stream = await openai.chat.completions.create({
+        model: config.CHAT_MODEL,
+        messages: apiMessages,
+        max_tokens: maxTokens,
+        stream: true,
+      })
+
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta?.content
+        if (delta) {
+          fullAnswer += delta
+          const formatted = formatter.push(delta)
+          if (formatted) writeNdjson(res, { type: 'delta', content: formatted })
+        }
       }
     }
 
     const tail = formatter.flush()
     if (tail) writeNdjson(res, { type: 'delta', content: tail })
-
-    if (ownerMode && snippetRequested && codeEvidenceStrong && !/```/.test(fullAnswer)) {
-      const fallback = ownerSnippetFallbackAnswer(snippetEvidence)
-      if (fallback) {
-        writeNdjson(res, { type: 'delta', content: '\n\n' + fallback })
-      }
-    }
 
     const allowBlocks =
       shouldGenerateExampleBlocks(questionForRag) &&

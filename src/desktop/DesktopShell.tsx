@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DesktopProvider } from './DesktopContext'
 import { ChatGlobeProvider } from '@/contexts/ChatGlobeContext'
 import { DesktopWallpaper } from './DesktopWallpaper'
@@ -31,15 +31,50 @@ const WINDOWS = [
   { appId: 'chat',       title: 'Portfolio AI',           content: <ChatWindow /> },
 ] as const
 
+const AMBIENT_PALETTES = ['dusk', 'ocean', 'violet', 'forest'] as const
+
+type AmbientPalette = (typeof AMBIENT_PALETTES)[number]
+
+function getAmbientPalette(): AmbientPalette {
+  const hourBucket = Math.floor(Date.now() / (60 * 60 * 1000))
+  return AMBIENT_PALETTES[hourBucket % AMBIENT_PALETTES.length]
+}
+
 // ─── Inner shell (needs DesktopProvider in scope) ─────────────────────────────
 
 function Shell() {
   const mobileLauncher = useMobileLauncher()
+  const [ambientPalette, setAmbientPalette] = useState<AmbientPalette>(() => getAmbientPalette())
+
+  useEffect(() => {
+    let hourIntervalId: number | null = null
+    const syncPalette = () => setAmbientPalette(getAmbientPalette())
+    const millisToNextHour = 60 * 60 * 1000 - (Date.now() % (60 * 60 * 1000))
+
+    const hourBoundaryTimeoutId = window.setTimeout(() => {
+      syncPalette()
+      hourIntervalId = window.setInterval(syncPalette, 60 * 60 * 1000)
+    }, millisToNextHour)
+
+    return () => {
+      window.clearTimeout(hourBoundaryTimeoutId)
+      if (hourIntervalId !== null) window.clearInterval(hourIntervalId)
+    }
+  }, [])
 
   return (
     <div className="mac-desktop">
       {/* SVG filter definitions used by LiquidGlass elements */}
       <LiquidGlassFilter />
+
+      {/* Layer 0.5: soft ambient glow + frosted veil */}
+      <div className="desktop-ambient" data-palette={ambientPalette} aria-hidden>
+        <span className="desktop-ambient-ball desktop-ambient-ball--one" />
+        <span className="desktop-ambient-ball desktop-ambient-ball--two" />
+        <span className="desktop-ambient-ball desktop-ambient-ball--three" />
+        <span className="desktop-ambient-ball desktop-ambient-ball--four" />
+        <span className="desktop-ambient-glass" />
+      </div>
 
       {/* Layer 0: animated wallpaper (z-0) — 3D model + video unchanged */}
       <DesktopWallpaper />
