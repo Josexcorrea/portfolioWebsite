@@ -1026,13 +1026,13 @@ body {
   --mac-dock-reserved: calc(80px + env(safe-area-inset-bottom, 0px));
 
   /* Blur levels */
-  --mac-blur-window: 64px;
+  --mac-blur-window: 72px;
   --mac-blur-dock: 60px;
   --mac-blur-menubar: 40px;
 
   /* Window glass ? true dark charcoal */
   --mac-window-bg:
-    radial-gradient(ellipse at 20% 0%, rgba(80, 70, 110, 0.10) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 0%, rgba(80, 70, 110, 0.10) 0%, rgba(18, 18, 22, 0.99) 55%),
     linear-gradient(160deg, rgba(32, 32, 36, 0.97) 0%, rgba(24, 24, 28, 0.98) 50%, rgba(18, 18, 22, 0.99) 100%);
   --mac-window-border:         rgba(255, 255, 255, 0.09);
   --mac-window-border-focused: rgba(255, 255, 255, 0.16);
@@ -5347,16 +5347,16 @@ body {
   --color-muted:      #6e6e73;
   --color-accent-dim: #6d28d9;
 
-  /* Light frosted glass windows */
+  /* Light frosted glass windows — milky falloff, opaque stops avoid stained-glass bleed */
   --mac-window-bg:
-    radial-gradient(ellipse at 16% 0%, rgba(255, 255, 255, 0.70) 0%, transparent 56%),
-    radial-gradient(ellipse at 88% 100%, rgba(186, 214, 255, 0.28) 0%, transparent 52%),
-    linear-gradient(150deg, rgba(255, 255, 255, 0.88) 0%, rgba(248, 251, 255, 0.93) 40%, rgba(244, 248, 255, 0.96) 100%);
+    radial-gradient(ellipse at 16% 0%, rgba(255, 255, 255, 0.55) 0%, rgba(248, 251, 255, 0.96) 58%),
+    radial-gradient(ellipse at 88% 100%, rgba(210, 228, 252, 0.14) 0%, rgba(246, 249, 255, 0.97) 52%),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.94) 0%, rgba(248, 251, 255, 0.97) 40%, rgba(244, 248, 255, 0.98) 100%);
   --mac-window-border:         rgba(0, 0, 0, 0.10);
   --mac-window-border-focused: rgba(0, 0, 0, 0.15);
   --mac-titlebar-bg:
-    radial-gradient(ellipse at 20% 0%, rgba(255, 255, 255, 0.80) 0%, transparent 65%),
-    linear-gradient(135deg, rgba(245, 245, 250, 0.94) 0%, rgba(238, 242, 250, 0.88) 100%);
+    radial-gradient(ellipse at 20% 0%, rgba(255, 255, 255, 0.65) 0%, rgba(242, 246, 252, 0.97) 65%),
+    linear-gradient(135deg, rgba(248, 249, 252, 0.98) 0%, rgba(238, 242, 250, 0.96) 100%);
   --mac-titlebar-separator: rgba(0, 0, 0, 0.08);
 
   --mac-shadow-resting: none;
@@ -5559,12 +5559,6 @@ body {
 [data-theme="light"] .chat-win-suggestion-card { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); color: rgba(0,0,0,0.62); }
 [data-theme="light"] .chat-win-input { background: rgba(255,255,255,0.80); border-color: rgba(0,0,0,0.12); color: rgba(0,0,0,0.82); }
 
-/* ?? Light mode: skills window ?? */
-[data-theme="light"] .mac-window[data-app-id="skills"] {
-  backdrop-filter: blur(24px) saturate(1.6) brightness(1.02);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6) brightness(1.02);
-}
-
 /* ================================================================
    Per-App dark-mode content fixes
    About has light glass ? its content needs dark text.
@@ -5613,12 +5607,12 @@ body {
    Finder and Contact (Mail) are intentionally left unstyled.
    ================================================================ */
 
-/* ?? ABOUT ? macOS Safari / cool sky blue ???????????????????????? */
+/* ?? ABOUT ? macOS Safari / cool sky blue — frosted milky base, subtle sky tint */
 .mac-window[data-app-id="about"] {
   background:
-    radial-gradient(ellipse at 16% 0%, rgba(120, 190, 255, 0.38) 0%, transparent 56%),
-    radial-gradient(ellipse at 88% 100%, rgba(80, 160, 240, 0.12) 0%, transparent 52%),
-    linear-gradient(150deg, rgba(232, 245, 255, 0.96) 0%, rgba(220, 238, 255, 0.93) 100%);
+    radial-gradient(ellipse at 16% 0%, rgba(120, 195, 255, 0.12) 0%, rgba(236, 244, 252, 0.98) 56%),
+    radial-gradient(ellipse at 88% 100%, rgba(100, 170, 235, 0.08) 0%, rgba(232, 242, 255, 0.97) 52%),
+    linear-gradient(150deg, rgba(248, 252, 255, 0.98) 0%, rgba(236, 244, 255, 0.97) 100%);
   border-color: rgba(80, 150, 220, 0.32);
 }
 .mac-window[data-app-id="about"].mac-window--focused {
@@ -5627,8 +5621,8 @@ body {
 }
 .mac-window[data-app-id="about"] .mac-titlebar {
   background:
-    radial-gradient(ellipse at 20% 0%, rgba(120, 195, 255, 0.55) 0%, transparent 65%),
-    linear-gradient(135deg, rgba(180, 220, 255, 0.70) 0%, rgba(140, 200, 255, 0.50) 100%);
+    radial-gradient(ellipse at 20% 0%, rgba(130, 200, 255, 0.14) 0%, rgba(238, 246, 255, 0.98) 65%),
+    linear-gradient(135deg, rgba(230, 242, 255, 0.96) 0%, rgba(218, 235, 252, 0.94) 100%);
   border-bottom-color: rgba(70, 140, 210, 0.24);
   box-shadow: 0 1px 0 rgba(200, 230, 255, 0.85) inset;
 }
@@ -5692,8 +5686,8 @@ body {
 /* ?? PROJECTS ? Terminal / dark green IDE ???????????????????????? */
 .mac-window[data-app-id="projects"] {
   background:
-    radial-gradient(ellipse at 16% 0%, rgba(52, 211, 153, 0.14) 0%, transparent 56%),
-    radial-gradient(ellipse at 88% 100%, rgba(5, 150, 105, 0.10) 0%, transparent 52%),
+    radial-gradient(ellipse at 16% 0%, rgba(52, 211, 153, 0.12) 0%, rgba(5, 14, 9, 0.98) 56%),
+    radial-gradient(ellipse at 88% 100%, rgba(5, 150, 105, 0.08) 0%, rgba(5, 14, 9, 0.98) 52%),
     linear-gradient(150deg, rgba(8, 20, 14, 0.97) 0%, rgba(5, 14, 9, 0.98) 100%);
   border-color: rgba(52, 211, 153, 0.28);
   backdrop-filter: blur(48px) saturate(1.4) brightness(0.92);
@@ -5705,7 +5699,7 @@ body {
 }
 .mac-window[data-app-id="projects"] .mac-titlebar {
   background:
-    radial-gradient(ellipse at 20% 0%, rgba(52, 211, 153, 0.16) 0%, transparent 65%),
+    radial-gradient(ellipse at 20% 0%, rgba(52, 211, 153, 0.12) 0%, rgba(6, 18, 12, 0.98) 65%),
     linear-gradient(135deg, rgba(10, 26, 18, 0.98) 0%, rgba(6, 18, 12, 0.97) 100%);
   border-bottom-color: rgba(52, 211, 153, 0.20);
   box-shadow: 0 1px 0 rgba(52, 211, 153, 0.14) inset;
@@ -5815,8 +5809,8 @@ body {
 /* ?? EXPERIENCE ? Same shell as Projects, red / rose accent (not green) */
 .mac-window[data-app-id="experience"] {
   background:
-    radial-gradient(ellipse at 16% 0%, rgba(248, 113, 113, 0.14) 0%, transparent 56%),
-    radial-gradient(ellipse at 88% 100%, rgba(185, 28, 28, 0.10) 0%, transparent 52%),
+    radial-gradient(ellipse at 16% 0%, rgba(248, 113, 113, 0.12) 0%, rgba(14, 5, 7, 0.98) 56%),
+    radial-gradient(ellipse at 88% 100%, rgba(185, 28, 28, 0.08) 0%, rgba(14, 5, 7, 0.98) 52%),
     linear-gradient(150deg, rgba(22, 8, 10, 0.97) 0%, rgba(14, 5, 7, 0.98) 100%);
   border-color: rgba(248, 113, 113, 0.28);
   backdrop-filter: blur(48px) saturate(1.4) brightness(0.92);
@@ -5828,7 +5822,7 @@ body {
 }
 .mac-window[data-app-id="experience"] .mac-titlebar {
   background:
-    radial-gradient(ellipse at 20% 0%, rgba(248, 113, 113, 0.16) 0%, transparent 65%),
+    radial-gradient(ellipse at 20% 0%, rgba(248, 113, 113, 0.12) 0%, rgba(18, 6, 8, 0.98) 65%),
     linear-gradient(135deg, rgba(28, 10, 12, 0.98) 0%, rgba(18, 6, 8, 0.97) 100%);
   border-bottom-color: rgba(248, 113, 113, 0.20);
   box-shadow: 0 1px 0 rgba(248, 113, 113, 0.14) inset;
@@ -5940,10 +5934,10 @@ body {
   overflow: hidden;
 }
 .mac-window[data-app-id="skills"] {
-  background: rgba(3, 5, 16, 0.96);
+  background: rgba(3, 5, 16, 0.988);
   border-color: rgba(0, 195, 175, 0.20);
-  backdrop-filter: blur(24px) saturate(1.1) brightness(0.85);
-  -webkit-backdrop-filter: blur(24px) saturate(1.1) brightness(0.85);
+  backdrop-filter: blur(var(--mac-blur-window)) saturate(1.2) brightness(0.86);
+  -webkit-backdrop-filter: blur(var(--mac-blur-window)) saturate(1.2) brightness(0.86);
 }
 .mac-window[data-app-id="skills"].mac-window--focused {
   border-color: rgba(0, 215, 195, 0.38);
@@ -5986,8 +5980,8 @@ body {
 /* ?? RESUME ? Preview / warm dark charcoal ?????????????????????? */
 .mac-window[data-app-id="resume"] {
   background:
-    radial-gradient(ellipse at 16% 0%, rgba(80, 60, 30, 0.22) 0%, transparent 56%),
-    radial-gradient(ellipse at 88% 100%, rgba(60, 45, 20, 0.14) 0%, transparent 52%),
+    radial-gradient(ellipse at 16% 0%, rgba(80, 60, 30, 0.16) 0%, rgba(20, 15, 10, 0.98) 56%),
+    radial-gradient(ellipse at 88% 100%, rgba(60, 45, 20, 0.10) 0%, rgba(20, 15, 10, 0.98) 52%),
     linear-gradient(150deg, rgba(26, 20, 14, 0.97) 0%, rgba(20, 15, 10, 0.98) 100%);
   border-color: rgba(145, 115, 70, 0.24);
   backdrop-filter: blur(48px) saturate(1.3) brightness(0.88);
@@ -6031,12 +6025,12 @@ body {
   background: rgba(217, 158, 40, 0.55);
 }
 
-/* ?? CHAT ? Messages / deep purple indigo ??????????????????????? */
+/* ?? CHAT ? Messages / deep purple indigo — frosted shell, mild lavender tint */
 .mac-window[data-app-id="chat"] {
   background:
-    radial-gradient(ellipse at 16% 0%, rgba(130, 60, 240, 0.16) 0%, transparent 56%),
-    radial-gradient(ellipse at 88% 100%, rgba(90, 40, 200, 0.12) 0%, transparent 52%),
-    linear-gradient(150deg, rgba(255, 255, 255, 0.95) 0%, rgba(250, 246, 255, 0.93) 100%);
+    radial-gradient(ellipse at 16% 0%, rgba(130, 80, 240, 0.10) 0%, rgba(252, 250, 255, 0.98) 56%),
+    radial-gradient(ellipse at 88% 100%, rgba(110, 70, 210, 0.08) 0%, rgba(248, 245, 255, 0.97) 52%),
+    linear-gradient(150deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 244, 255, 0.97) 100%);
   border-color: rgba(140, 70, 240, 0.24);
 }
 .mac-window[data-app-id="chat"].mac-window--focused {
