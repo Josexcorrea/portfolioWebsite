@@ -66,6 +66,13 @@ const QUICK_SUGGESTIONS = [
   "What's your background?",
 ]
 
+/** Dev-only: example questions to pair with PORTFOLIO_OWNER_PREFIX in server `.env` (prefix not shown here). */
+const DEV_OWNER_MODE_HINTS = [
+  'Explain the PDM serial frame parse and validation path.',
+  'What functions implement channel telemetry in my PDM project?',
+  'Summarize tradeoffs for how this portfolio chat RAG is built.',
+]
+
 // ── Sub-components ─────────────────────────────────────────────────────────
 
 function WelcomeScreen({ onPick }: { onPick: (s: string) => void }) {
@@ -213,6 +220,25 @@ function ChatContent() {
       {hasMessages && !loading && (
         <div className="chat-win-quick-row">
           {QUICK_SUGGESTIONS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => pickSuggestion(s)}
+              className="chat-win-quick-chip"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {import.meta.env.DEV && hasMessages && !loading && (
+        <div className="chat-win-quick-row chat-win-quick-row--dev" aria-label="Developer interview-prep hints">
+          <p className="chat-win-dev-hint">
+            Dev only: start your message with the server&apos;s <code>PORTFOLIO_OWNER_PREFIX</code>, then one of
+            these questions (or your own).
+          </p>
+          {DEV_OWNER_MODE_HINTS.map((s) => (
             <button
               key={s}
               type="button"

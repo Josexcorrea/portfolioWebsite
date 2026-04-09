@@ -68,7 +68,10 @@ function buildSiteImplementationNotes() {
     '- Chat length / retrieval (env): MAX_COMPLETION_TOKENS (default 256), MAX_COMPLETION_TOKENS_WITH_RAG (default 384, when indexed passages are retrieved), MAX_COMPLETION_TOKENS_DETAIL (default 2048), RAG_TOP_K (default 3), RAG_TOP_K_DETAIL (default 12), RAG_MIN_SCORE_DETAIL (default 0.18, detail questions only). Detail mode triggers on phrases like "technical", "architecture", "in depth", "explain how", stack/compare/design options.',
   )
   lines.push(
-    '- GitHub for RAG: `npm run build-knowledge` — optional full tree (`GITHUB_FULL_TREE=true`, server/lib/githubFullTreeIndex.js) or partial paths (githubRepoFetch.js). `npm run verify-github` checks raw URLs. Env: GITHUB_TOKEN recommended, GITHUB_FETCH_REPO=false skips all GitHub fetches.',
+    '- GitHub for RAG: `npm run build-knowledge` — optional full tree (`GITHUB_FULL_TREE=true`, server/lib/githubFullTreeIndex.js) or partial paths + server/knowledge/github-extra-paths.json. `npm run verify-github` checks raw URLs. Env: GITHUB_TOKEN recommended, GITHUB_FETCH_REPO=false skips all GitHub fetches.',
+  )
+  lines.push(
+    '- Owner / interview mode: optional `PORTFOLIO_OWNER_PREFIX` (e.g. `/owner`) — if the user message starts with that exact prefix, the server strips it for retrieval and uses a technical “office assistant” prompt (see chat route).',
   )
 
   return lines.join('\n')
@@ -103,6 +106,7 @@ Style rules:
 
 Knowledge rules:
 - Use the portfolio context to answer questions about Jose's projects, experience, and background. The context may include excerpts from public GitHub (README, configs, and—if enabled at build time—filtered source files from full-tree indexing), plus site copy and PDFs. Prefer technical details from those excerpts when answering in-depth questions.
+- Code and repos: the portfolio context holds **indexed excerpts only**, not a live GitHub browser. If the user asks for implementation that is not present in the passages, say so plainly; cite public repo URLs from the context when available—do not invent file paths or claim “no GitHub integration” when excerpts exist.
 - **Portfolio context (RAG):** The "## Portfolio context" section may label passages **[S1], [S2], …** only so you can tell chunks apart. Those tags are **internal—never include [Sn], (Sn), or similar in your reply.** Answer in normal conversational prose, like a typical chat assistant. Ground facts in the passages but paraphrase; do not paste long raw excerpts unless the user asks for a quote.
 - "Who did Jose work on?": interpret as "which projects/roles did Jose work on" and answer using the portfolio context (and any matching research PDF chunks in the retrieved context).
 - "Who did Jose work with?"/"who did he work with on ...?": interpret as collaborators/teammates/other people named in the research PDF or other indexed passages.
@@ -132,6 +136,18 @@ The user asked for detailed / technical / architectural explanation.
 - Do **not** show internal passage labels like [S1] or ([S2]) in the answer. Prefer clear paraphrase and concrete terms from the portfolio context; optional short quoted phrases are fine without any source tags.
 - If something is not in the context, say what is unknown rather than inventing internals.
 - If a public repository URL appears in the portfolio context for the relevant project, you may include it once at the end under a line like "Source:".
+`.trim()
+
+  config.systemPromptOwnerMode = `
+## Response mode: owner / interview prep (private)
+The site owner enabled this turn via a server-configured message prefix. This is not the public portfolio tone.
+- Use direct, technical language. You may address Jose as "you" when natural.
+- **Ignore** the usual "2–4 short sentences" rule unless the question is trivial: give enough depth to refresh memory or prep for interviews (structured bullets OK).
+- Ground every specific claim in the portfolio context. When the context includes code or file paths, you may show **short** markdown code fences with the actual lines; paraphrase the rest.
+- For interview-style questions, prefer: claim → evidence from context (with path/repo if present) → tradeoffs or alternatives when the context supports it.
+- If a function, loop, or algorithm is not in the indexed excerpts, say it is not in the retrieved context and name what *was* retrieved—do not fabricate source code.
+- Still do not invent live weather, scores, or news: those require the "## Web search results" section.
+- Do **not** show internal RAG labels like [S1] in the answer.
 `.trim()
 
   config.systemPromptBase += `\n\nMath / formulas:\n- For equations, use LaTeX: inline $...$ or display $$...$$. The chat UI renders math with KaTeX.\n- Prefer one clear statement per formula; avoid repeating the same equation in multiple forms.\n`

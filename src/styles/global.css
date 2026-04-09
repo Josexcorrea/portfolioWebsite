@@ -755,7 +755,7 @@ body {
   }
 }
 
-/* ?????? Minimize: shrink toward dock bottom ???????????????????????????????????????????????????????????????????????????????????????????????????????????? */
+/* ?????? Minimize: shrink toward dock bottom (legacy duplicate; main keyframes below) ?????? */
 @keyframes mac-window-minimize {
   0% {
     opacity: 1;
@@ -763,7 +763,7 @@ body {
   }
   100% {
     opacity: 0;
-    transform: scale(0.25) translateY(60vh);
+    transform: scale(0.25) translateY(var(--mac-minimize-translate-y, 60vh));
   }
 }
 
@@ -1024,6 +1024,8 @@ body {
   /* Measured at runtime (DesktopProvider); fallbacks for first paint + SSR */
   --mac-menubar-stack: calc(env(safe-area-inset-top, 0px) + var(--mac-menubar-height));
   --mac-dock-reserved: calc(80px + env(safe-area-inset-bottom, 0px));
+  /* Minimize genie: distance toward dock (updated by layout; fallback targets dock band) */
+  --mac-minimize-translate-y: calc(100vh - var(--mac-dock-reserved) - 20px);
 
   /* Blur levels */
   --mac-blur-window: 72px;
@@ -1571,6 +1573,16 @@ body {
 
 .mac-dock-item--open .mac-dock-dot {
   opacity: 1;
+}
+
+.mac-dock-item--minimized .mac-dock-icon {
+  opacity: 0.88;
+  transform: scale(0.94);
+}
+
+.mac-dock-dot--minimized {
+  background: rgba(254, 188, 46, 0.95);
+  box-shadow: 0 0 6px 1px rgba(254, 188, 46, 0.45);
 }
 
 /* ---- Tooltip ---- */
@@ -2227,6 +2239,13 @@ body {
   box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.75);
 }
 
+.ios-app-icon--minimized {
+  opacity: 0.88;
+  box-shadow:
+    0 0 0 2px rgba(168, 85, 247, 0.45),
+    inset 0 0 0 1px rgba(254, 188, 46, 0.55);
+}
+
 .ios-home-dock-wrap {
   flex-shrink: 0;
   padding: 0 0.45rem 0.25rem;
@@ -2310,6 +2329,11 @@ body {
 }
 
 @media (max-width: 767px) {
+  :root {
+    /* iOS home: genie aims toward app grid above bottom dock strip */
+    --mac-minimize-translate-y: min(70vh, calc(100vh - var(--mac-dock-reserved) - 120px));
+  }
+
   .mac-wallpaper-canvas {
     display: flex;
     align-items: center;
@@ -2451,7 +2475,7 @@ body {
   }
   100% {
     opacity: 0;
-    transform: scale(0.1) translateY(88vh) scaleX(0.3);
+    transform: scale(0.1) translateY(var(--mac-minimize-translate-y, 88vh)) scaleX(0.3);
     transform-origin: bottom center;
   }
 }
@@ -2465,7 +2489,7 @@ body {
 @keyframes mac-window-restore {
   0% {
     opacity: 0;
-    transform: scale(0.1) translateY(88vh) scaleX(0.3);
+    transform: scale(0.1) translateY(var(--mac-minimize-translate-y, 88vh)) scaleX(0.3);
   }
   55% {
     opacity: 1;
@@ -3068,6 +3092,21 @@ body {
 .chat-win-quick-chip:focus-visible {
   outline: 2px solid rgba(168, 85, 247, 0.6);
   outline-offset: 2px;
+}
+
+.chat-win-quick-row--dev {
+  flex-wrap: wrap;
+  border-top: 1px dashed rgba(168, 85, 247, 0.22);
+  padding-top: 10px;
+  margin-top: 2px;
+}
+
+.chat-win-dev-hint {
+  flex-basis: 100%;
+  font-size: 10px;
+  color: rgba(196, 181, 253, 0.42);
+  margin: 0 0 4px;
+  line-height: 1.35;
 }
 
 /* Welcome screen */

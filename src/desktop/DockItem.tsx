@@ -4,7 +4,10 @@ interface DockItemProps {
   id: string
   label: string
   icon: ReactNode
+  /** App is open in the shell lifecycle (includes minimized). */
   isOpen?: boolean
+  /** Window is open but minimized to the dock. */
+  isMinimized?: boolean
   href?: string
   onClick: () => void
 }
@@ -12,13 +15,14 @@ interface DockItemProps {
 /**
  * Individual dock icon with bounce animation, open-indicator dot, and tooltip.
  * Rendered as <button> for app items and <a> for external links.
- * Wrapped in React.memo: re-renders only when isOpen changes.
+ * Wrapped in React.memo: re-renders when dock state props change.
  */
 export const DockItem = memo(function DockItem({
   id,
   label,
   icon,
   isOpen = false,
+  isMinimized = false,
   href,
   onClick,
 }: DockItemProps) {
@@ -35,6 +39,7 @@ export const DockItem = memo(function DockItem({
   const cls = [
     'mac-dock-item',
     isOpen ? 'mac-dock-item--open' : '',
+    isMinimized ? 'mac-dock-item--minimized' : '',
     bouncing ? 'mac-dock-item--bouncing' : '',
   ]
     .filter(Boolean)
@@ -45,7 +50,12 @@ export const DockItem = memo(function DockItem({
       <div className="mac-dock-icon" aria-hidden="true">
         {icon}
       </div>
-      {isOpen && <span className="mac-dock-dot" aria-hidden="true" />}
+      {isOpen && (
+        <span
+          className={`mac-dock-dot${isMinimized ? ' mac-dock-dot--minimized' : ''}`}
+          aria-hidden="true"
+        />
+      )}
       <span className="mac-dock-tooltip" role="tooltip" id={`dock-tip-${id}`}>
         {label}
       </span>
@@ -72,7 +82,9 @@ export const DockItem = memo(function DockItem({
     <button
       type="button"
       className={cls}
-      aria-label={isOpen ? `${label} (open)` : label}
+      aria-label={
+        isMinimized ? `${label} (minimized)` : isOpen ? `${label} (open)` : label
+      }
       aria-describedby={`dock-tip-${id}`}
       aria-pressed={isOpen}
       onClick={handleClick}

@@ -31,16 +31,20 @@ export function Dock() {
       aria-hidden={!dockVisible}
     >
       <div className="mac-dock" role="list">
-        {DOCK_APP_ENTRIES.map(({ id, label, appId }) => (
-          <DockItem
-            key={id}
-            id={id}
-            label={label}
-            icon={DOCK_ICONS[appId]}
-            isOpen={windows[appId].isOpen && !windows[appId].isMinimized}
-            onClick={() => handleAppClick(appId)}
-          />
-        ))}
+        {DOCK_APP_ENTRIES.map(({ id, label, appId }) => {
+          const w = windows[appId]
+          return (
+            <DockItem
+              key={id}
+              id={id}
+              label={label}
+              icon={DOCK_ICONS[appId]}
+              isOpen={w.isOpen}
+              isMinimized={w.isOpen && w.isMinimized}
+              onClick={() => handleAppClick(appId)}
+            />
+          )
+        })}
 
         <div className="mac-dock-separator" role="separator" aria-hidden="true" />
 

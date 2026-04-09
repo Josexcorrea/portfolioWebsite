@@ -57,16 +57,17 @@ npm run dev:full     # Vite + Express (recommended for full-stack local dev)
 
 ## Configuration
 
-Copy [`.env.example`](./.env.example) to `.env` at the repo root. **`OPENAI_API_KEY`** is required for chat and for building embeddings. **`TAVILY_API_KEY`** is optional and enables web search in the chat pipeline. **`PORT`**, **`CORS_ORIGIN`**, RAG tuning, GitHub indexing, and rate-limit variables are documented in `.env.example`; use that file as the checklist when deploying.
+Copy [`.env.example`](./.env.example) to `.env` at the repo root. **`OPENAI_API_KEY`** is required for chat and for building embeddings. **`TAVILY_API_KEY`** is optional and enables web search in the chat pipeline (set on the **runtime** environment for `/api/chat`, e.g. Vercel). Optional **`PORTFOLIO_OWNER_PREFIX`** unlocks owner/interview mode when the user message starts with that exact prefix. **`PORT`**, **`CORS_ORIGIN`**, RAG tuning, GitHub indexing, and rate-limit variables are documented in `.env.example`; use that file as the checklist when deploying. Extra GitHub paths for RAG live in [`server/knowledge/github-extra-paths.json`](./server/knowledge/github-extra-paths.json).
 
 ## Deployment
 
 ### Vercel
 
 1. Connect the repository. **Output directory:** `dist`. The **build command** is set in [`vercel.json`](./vercel.json): `npm run rebuild-knowledge && npm run build` so each deploy refreshes `documents.json` + GitHub-indexed chunks + `embeddings.json`, then builds the SPA. (If the Vercel dashboard overrides **Build Command**, either remove the override or set it to the same command.)
-2. Set environment variables for **Production** (and **Preview** if you use preview deploys). For Path B, these must be available at **build** time: **`OPENAI_API_KEY`** (embeddings), **`GITHUB_TOKEN`** (repo fetch; use a classic PAT with `repo` for private repos). Optional: **`GITHUB_FULL_TREE=true`** for deeper indexing (see `.env.example` for limits). Runtime chat still needs **`OPENAI_API_KEY`** on the serverless function (same vars apply).
+2. Set environment variables for **Production** (and **Preview** if you use preview deploys). For Path B, these must be available at **build** time: **`OPENAI_API_KEY`** (embeddings), **`GITHUB_TOKEN`** (repo fetch; use a classic PAT with `repo` for private repos). Optional: **`GITHUB_FULL_TREE=true`** for deeper indexing (see `.env.example` for limits). Runtime chat still needs **`OPENAI_API_KEY`** on the serverless function (same vars apply). Add **`TAVILY_API_KEY`** at runtime for live web search; optional **`PORTFOLIO_OWNER_PREFIX`** for owner/interview mode.
 3. [`vercel.json`](./vercel.json) bundles `server/knowledge/**` into the `api/chat` function so the freshly built `embeddings.json` is included. You do **not** need to commit `embeddings.json` if every deploy runs `rebuild-knowledge`.
-4. Optional: configure Upstash Redis (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) and `RATE_LIMIT_MAX` for per-IP limits on the serverless route. Without Redis, the function does not apply the same throttling as local Express.
+4. **Troubleshooting RAG / GitHub:** In Vercel **Build Logs**, search for `[build-knowledge]`. Confirm `GITHUB_TOKEN: set` (not missing or placeholder), `GITHUB_FULL_TREE: true` if you expect deep code indexing, and the summary line with counts from GitHub full-tree and partial fetch. For URL resolution without embeddings, run `npm run verify-github` locally.
+5. Optional: configure Upstash Redis (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) and `RATE_LIMIT_MAX` for per-IP limits on the serverless route. Without Redis, the function does not apply the same throttling as local Express.
 
 Local development: `npm run dev` does not start the API. Use **`npm run dev:full`** so Vite proxies `/api` to Express on port 3001 ([`vite.config.ts`](./vite.config.ts)).
 

@@ -23,7 +23,15 @@ export async function searchWeb(query, opts = {}) {
       }),
     })
 
-    if (!response.ok) return null
+    if (!response.ok) {
+      const errText = await response.text()
+      console.error(
+        'Tavily HTTP error:',
+        response.status,
+        errText.slice(0, 500),
+      )
+      return null
+    }
 
     const data = await response.json()
     if (!data?.results || !Array.isArray(data.results)) return null

@@ -47,7 +47,10 @@ export function MobileIOSHome() {
 
           <div className="ios-home-grid" role="list">
             {DOCK_APP_ENTRIES.map(({ id, label, appId }) => {
-              const open = windows[appId].isOpen && !windows[appId].isMinimized
+              const w = windows[appId]
+              const running = w.isOpen
+              const minimized = w.isOpen && w.isMinimized
+              const foreground = w.isOpen && !w.isMinimized
               return (
                 <button
                   key={id}
@@ -55,9 +58,19 @@ export function MobileIOSHome() {
                   role="listitem"
                   className="ios-app-tile"
                   onClick={() => handleApp(appId)}
-                  aria-label={open ? `${label}, open` : label}
+                  aria-label={
+                    minimized ? `${label}, minimized` : foreground ? `${label}, open` : label
+                  }
                 >
-                  <span className={`ios-app-icon${open ? ' ios-app-icon--open' : ''}`}>
+                  <span
+                    className={[
+                      'ios-app-icon',
+                      running ? 'ios-app-icon--open' : '',
+                      minimized ? 'ios-app-icon--minimized' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
                     {DOCK_ICONS[appId]}
                   </span>
                 </button>

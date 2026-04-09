@@ -5,7 +5,7 @@
  * - Vercel build is defined in vercel.json: `npm run rebuild-knowledge && npm run build` (Path B: fresh RAG
  *   embeddings on each deploy), then static `dist` + this function. Package `start` script matches that pipeline.
  * - Set secrets in Vercel → Project → Settings → Environment Variables (see .env.example):
- *   OPENAI_API_KEY (required), optional TAVILY_API_KEY, OPENAI_MODEL, RAG_* tuning, etc.
+ *   OPENAI_API_KEY (required), optional TAVILY_API_KEY, PORTFOLIO_OWNER_PREFIX, OPENAI_MODEL, RAG_* tuning, etc.
  * - RAG needs server/knowledge/embeddings.json bundled: vercel.json `includeFiles` for server/knowledge/**.
  *   Commit embeddings.json or generate it in CI before deploy (`npm run rebuild-knowledge`).
  * - Optional: UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN for per-IP rate limiting (parity with Express).

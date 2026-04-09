@@ -49,7 +49,7 @@ These commands run files under `server/scripts/`:
 | `npm run verify-github` | [`scripts/verify-github-repos.js`](./scripts/verify-github-repos.js) | Verify GitHub URLs referenced in content. |
 | `npm run server` / `npm run start:server` | [`index.js`](./index.js) | Start the Express API. |
 
-GitHub indexing and file filters are controlled by env vars listed in [`.env.example`](../.env.example) (`GITHUB_TOKEN`, `GITHUB_FULL_TREE`, limits, allow/deny lists).
+GitHub indexing and file filters are controlled by env vars listed in [`.env.example`](../.env.example) (`GITHUB_TOKEN`, `GITHUB_FULL_TREE`, limits, allow/deny lists). Per-repo file paths beyond the default list can be set in [`knowledge/github-extra-paths.json`](./knowledge/github-extra-paths.json).
 
 ## Security and operations
 

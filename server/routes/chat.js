@@ -1,5 +1,6 @@
 import express from 'express'
 import { writeNdjson } from '../lib/ndjson.js'
+import { parseOwnerPrefix } from '../lib/ownerPrefix.js'
 import { getRagContext } from '../services/rag.js'
 import { searchWeb } from '../services/webSearch.js'
 import { generateBlocks, shouldGenerateExampleBlocks } from '../services/blocks.js'
@@ -103,8 +104,15 @@ export async function executeChatPost(req, res, { openai, config, store }) {
     return res.status(400).json({ error: 'Last message must be from user with content.' })
   }
 
+  const { ownerMode, questionForRag } = parseOwnerPrefix(lastQuestion)
+  if (ownerMode && !questionForRag.trim()) {
+    return res.status(400).json({
+      error: 'Add your question after the owner prefix (set PORTFOLIO_OWNER_PREFIX in server env).',
+    })
+  }
+
   try {
-    const qLower = lastQuestion.toLowerCase()
+    const qLower = questionForRag.toLowerCase()
     const isWhoOrCollabQuestion =
       /\bwho\b/.test(qLower) ||
       qLower.includes('worked with') ||
@@ -117,18 +125,24 @@ export async function executeChatPost(req, res, { openai, config, store }) {
 
     let ragTopK = config.RAG_TOP_K
     if (isWhoOrCollabQuestion) ragTopK = Math.max(ragTopK, 5)
-    if (wantsDetail) ragTopK = Math.max(ragTopK, config.RAG_TOP_K_DETAIL ?? 8)
+    if (wantsDetail || ownerMode) ragTopK = Math.max(ragTopK, config.RAG_TOP_K_DETAIL ?? 8)
+    if (ownerMode) {
+      ragTopK = Math.min(20, Math.max(ragTopK, (config.RAG_TOP_K_DETAIL ?? 12) + 2))
+    }
 
     let ragMinScore = config.RAG_MIN_SCORE
     if (isWhoOrCollabQuestion) ragMinScore = Math.min(ragMinScore, 0.62)
-    if (wantsDetail) {
+    if (wantsDetail || ownerMode) {
       const detailFloor =
         typeof config.RAG_MIN_SCORE_DETAIL === 'number' ? config.RAG_MIN_SCORE_DETAIL : 0.18
       ragMinScore = Math.min(ragMinScore, detailFloor)
     }
+    if (ownerMode) {
+      ragMinScore = Math.min(ragMinScore, 0.12)
+    }
 
     const { chunks, context, maxScore } = await getRagContext({
-      question: lastQuestion,
+      question: questionForRag,
       openai,
       store,
       topK: ragTopK,
@@ -181,9 +195,39 @@ export async function executeChatPost(req, res, { openai, config, store }) {
       return
     }
 
-    const webResults = shouldRunWebSearch(lastQuestion, { maxScore, chunksLen: chunks.length })
-      ? await searchWeb(lastQuestion, { weakRag: maxScore < 0.28 && chunks.length < 2 })
+    if (
+      looksLikeFreshnessOrGeneralWebQuery(qLower) &&
+      !process.env.TAVILY_API_KEY
+    ) {
+      console.log(
+        JSON.stringify({
+          requestId,
+          route: '/api/chat',
+          webSearchSkipped: 'no_tavily_key',
+          freshOrWebQuery: true,
+        }),
+      )
+    }
+
+    const webWanted = shouldRunWebSearch(questionForRag, {
+      maxScore,
+      chunksLen: chunks.length,
+    })
+    const webResults = webWanted
+      ? await searchWeb(questionForRag, {
+          weakRag: maxScore < 0.28 && chunks.length < 2,
+        })
       : null
+
+    if (webWanted && (!webResults || webResults.length === 0)) {
+      console.log(
+        JSON.stringify({
+          requestId,
+          route: '/api/chat',
+          webSearchTriedNoResults: true,
+        }),
+      )
+    }
     let webContext = ''
     if (webResults && webResults.length > 0) {
       webContext = webResults
@@ -195,13 +239,32 @@ export async function executeChatPost(req, res, { openai, config, store }) {
     if (wantsDetail && config.systemPromptDetailMode) {
       systemContent += `\n\n${config.systemPromptDetailMode}`
     }
+    if (ownerMode && config.systemPromptOwnerMode) {
+      systemContent += `\n\n${config.systemPromptOwnerMode}`
+    }
     if (webContext) systemContent += `\n\n## Web search results\n${webContext}`
     systemContent += `\n\n## Portfolio context\n${context}`
 
-    const apiMessages = [{ role: 'system', content: systemContent }, ...messages]
+    const messagesForModel =
+      ownerMode && messages.length > 0
+        ? (() => {
+            const lastIdx = messages.length - 1
+            const last = messages[lastIdx]
+            if (last.role !== 'user') return messages
+            return [
+              ...messages.slice(0, lastIdx),
+              { ...last, content: questionForRag },
+            ]
+          })()
+        : messages
 
-    let maxTokens = wantsDetail ? config.MAX_COMPLETION_TOKENS_DETAIL : config.MAX_COMPLETION_TOKENS
-    if (!wantsDetail && chunks.length > 0) {
+    const apiMessages = [{ role: 'system', content: systemContent }, ...messagesForModel]
+
+    let maxTokens =
+      wantsDetail || ownerMode
+        ? config.MAX_COMPLETION_TOKENS_DETAIL
+        : config.MAX_COMPLETION_TOKENS
+    if (!wantsDetail && !ownerMode && chunks.length > 0) {
       const floor =
         typeof config.MAX_COMPLETION_TOKENS_WITH_RAG === 'number'
           ? config.MAX_COMPLETION_TOKENS_WITH_RAG
@@ -235,9 +298,9 @@ export async function executeChatPost(req, res, { openai, config, store }) {
     const tail = formatter.flush()
     if (tail) writeNdjson(res, { type: 'delta', content: tail })
 
-    if (shouldGenerateExampleBlocks(lastQuestion)) {
+    if (shouldGenerateExampleBlocks(questionForRag)) {
       const blocks = await generateBlocks({
-        question: lastQuestion,
+        question: questionForRag,
         answer: fullAnswer,
         openaiClient: openai,
         model: config.CHAT_MODEL,
@@ -259,6 +322,7 @@ export async function executeChatPost(req, res, { openai, config, store }) {
         ragMaxScore: maxScore,
         webSearch: Boolean(webResults?.length),
         detailMode: wantsDetail,
+        ownerMode,
         maxTokens,
       }),
     )
