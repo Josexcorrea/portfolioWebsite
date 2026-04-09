@@ -244,11 +244,9 @@ export const LiquidGlassCard = ({
             'inset 0 -0.5px 0 rgba(0,0,0,0.07)',       // subtle bottom rim
             'inset 1px 0 0 rgba(255,255,255,0.55)',     // left rim
             'inset -1px 0 0 rgba(255,255,255,0.55)',    // right rim
-            shadowStyles[shadowIntensity],              // outer drop shadow
-            outerGlow,
-          ]
-            .filter(Boolean)
-            .join(', '),
+            ...(shadowIntensity !== 'none' ? [shadowStyles[shadowIntensity]] : []),
+            ...(outerGlow ? [outerGlow] : []),
+          ].join(', '),
           border: '0.5px solid rgba(255,255,255,0.60)',
           pointerEvents: 'none',
         }}

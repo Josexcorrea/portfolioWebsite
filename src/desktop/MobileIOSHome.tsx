@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useDesktop } from './DesktopContext'
-import { DOCK_APP_ENTRIES, DOCK_ICONS } from './dockIcons'
+import { DOCK_APP_ENTRIES, DOCK_ICONS, IosDockThemeGlyph } from './dockIcons'
 import type { AppId } from './types'
 
 function IosStatusBar() {
@@ -60,7 +60,6 @@ export function MobileIOSHome() {
                   <span className={`ios-app-icon${open ? ' ios-app-icon--open' : ''}`}>
                     {DOCK_ICONS[appId]}
                   </span>
-                  <span className="ios-app-label">{label}</span>
                 </button>
               )
             })}
@@ -93,7 +92,7 @@ export function MobileIOSHome() {
                 aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               >
                 <span className="ios-dock-icon ios-dock-icon--glyph" aria-hidden>
-                  {theme === 'dark' ? '☀' : '☾'}
+                  <IosDockThemeGlyph mode={theme === 'dark' ? 'sun' : 'moon'} />
                 </span>
               </button>
             </nav>

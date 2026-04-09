@@ -73,8 +73,8 @@ function DropdownMenu({ items, theme }: { items: MenuItem[]; theme: 'dark' | 'li
       className="mac-menu-dropdown"
       role="menu"
       blurIntensity="md"
-      glowIntensity="xs"
-      shadowIntensity="md"
+      glowIntensity="none"
+      shadowIntensity="none"
       borderRadius="8px"
       tint={tint}
     >
@@ -283,14 +283,17 @@ export function MenuBar() {
       <div className="mac-menubar" aria-label="Menu bar" role="menubar" ref={menuBarRef}>
         {/* ── Left: logo + app name + menus ── */}
         <div className="mac-menubar-section mac-menubar-section--left">
-          <span className="mac-menubar-apple" aria-hidden>
-            <SiteLogo />
-          </span>
-          <span className="mac-menubar-item mac-menubar-item--app">{activeLabel}</span>
+          <div className="mac-menubar-leading">
+            <span className="mac-menubar-apple" aria-hidden>
+              <SiteLogo />
+            </span>
+            <span className="mac-menubar-item mac-menubar-item--app">{activeLabel}</span>
+          </div>
 
           {MENUS.map(({ id, label, items }) => (
             <div key={id} className="mac-menu-trigger-wrapper">
               <button
+                type="button"
                 className={`mac-menubar-item${openMenu === id ? ' mac-menubar-item--active' : ''}`}
                 onClick={() => handleMenuClick(id)}
                 onMouseEnter={() => openMenu !== null && openMenu !== id && setOpenMenu(id)}
